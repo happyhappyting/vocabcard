@@ -2,157 +2,131 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>华文词语华容道</title>
     <style>
-        :root {
-            --primary: #4a90e2;
-            --success: #4caf50;
-            --tile-bg: #ffffff;
-            --text-color: #333;
-        }
-        body { font-family: 'PingFang SC', system-ui; background: #fdf6e3; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        .header { text-align: center; margin-bottom: 20px; }
+        :root { --primary: #4a90e2; --success: #4caf50; --empty: #e0e0e0; }
+        body { font-family: system-ui; background: #fdf6e3; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        p { color: #666; font-size: 0.9rem; }
         
-        /* 游戏看板：根据 5x5 网格设计 */
-        #game-container {
+        #game-board {
             display: grid;
-            grid-template-columns: repeat(5, 70px);
-            grid-template-rows: repeat(5, 70px);
+            grid-template-columns: repeat(5, 65px); /* 5列 */
+            grid-template-rows: repeat(5, 65px);    /* 5行 */
             gap: 8px;
             background: #d3c6aa;
-            padding: 12px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            padding: 10px;
+            border-radius: 10px;
+            touch-action: manipulation; /* 优化移动端点击 */
         }
 
         .tile {
-            width: 70px; height: 70px; background: var(--tile-bg);
-            border-radius: 8px; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            cursor: pointer; position: relative; transition: transform 0.1s, background 0.3s;
+            width: 65px; height: 65px; background: white;
+            border-radius: 6px; display: flex; justify-content: center;
+            align-items: center; font-size: 24px; font-weight: bold;
+            cursor: pointer; position: relative; transition: all 0.2s;
             box-shadow: 0 3px 0 #bbb;
         }
 
-        .tile.empty { background: rgba(0,0,0,0.1); box-shadow: none; cursor: default; }
-        
-        .tile .char { font-size: 26px; font-weight: bold; color: var(--text-color); }
-        
-        /* 拼音气泡：点击显示 */
-        .popover {
-            position: absolute; top: -45px; background: #333; color: white;
-            padding: 4px 8px; border-radius: 4px; font-size: 12px;
-            white-space: nowrap; z-index: 10; display: none; pointer-events: none;
-        }
-        .tile.show-tip .popover { display: block; }
-        
-        .tile.matched { background: var(--success); color: white; box-shadow: 0 3px 0 #2e7d32; }
-        .tile.matched .char { color: white; }
+        .tile.empty { background: var(--empty); box-shadow: none; cursor: default; }
+        .tile.matched { background: var(--success); color: white; border-color: #2e7d32; }
 
-        .controls { margin-top: 20px; display: flex; gap: 10px; }
-        button { padding: 10px 20px; border: none; border-radius: 20px; background: var(--primary); color: white; cursor: pointer; font-weight: bold; }
+        /* 拼音小气泡 */
+        .popover {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 2px 6px; border-radius: 4px;
+            font-size: 11px; white-space: nowrap; pointer-events: none; display: none;
+        }
+        .tile:active .popover { display: block; }
+
+        .controls { margin-top: 20px; }
+        button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 25px; background: var(--primary); color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="header">
     <h1>🧩 词语华容道</h1>
-    <p>滑动文字，横向或纵向拼出正确词语！</p>
-</div>
+    <p>点击空格旁边的字进行移动<br>长按/点击查看拼音</p>
 
-<div id="game-container"></div>
+    <div id="game-board"></div>
 
-<div class="controls">
-    <button onclick="initGame()">重新洗牌</button>
-</div>
+    <div class="controls">
+        <button onclick="initGame()">重新洗牌</button>
+    </div>
 
 <script>
     const vocabulary = [
-        { word: "淘气", pinyin: "táo qì", meaning: "naughty" },
-        { word: "科技", pinyin: "kē jì", meaning: "technology" },
-        { word: "人缘", pinyin: "rén yuán", meaning: "popularity" },
-        { word: "直率", pinyin: "zhí shuài", meaning: "frank" },
-        { word: "推荐", pinyin: "tuī jiàn", meaning: "recommend" },
-        { word: "瞬间", pinyin: "shùn jiān", meaning: "instant" },
-        { word: "兴致勃勃", pinyin: "xìng zhì bó bó", meaning: "high spirits" },
-        { word: "手足无措", pinyin: "shǒu zú wú cuò", meaning: "at a loss" },
-        { word: "振振有词", pinyin: "zhèn zhèn yǒu cí", meaning: "argue boldly" },
-        { word: "哑口无言", pinyin: "yǎ kǒu wú yán", meaning: "speechless" }
+        { word: "淘气", pinyin: "táo qì" }, { word: "科技", pinyin: "kē jì" },
+        { word: "人缘", pinyin: "rén yuán" }, { word: "直率", pinyin: "zhí shuài" },
+        { word: "瞬间", pinyin: "shùn jiān" }, { word: "粘", pinyin: "zhān" },
+        { word: "嚷", pinyin: "rǎng" }, { word: "律师", pinyin: "lǜ shī" }
     ];
 
-    let tiles = [];
-    const size = 5; // 5x5 网格
+    const size = 5; 
+    let board = [];
 
     function initGame() {
-        // 1. 提取所有汉字
-        let allChars = [];
-        vocabulary.forEach(item => {
-            item.word.split('').forEach(char => {
-                allChars.push({ char, py: item.pinyin, mean: item.meaning });
-            });
+        // 准备 24 个汉字 + 1 个空格
+        let chars = [];
+        vocabulary.forEach(v => {
+            v.word.split('').forEach(c => chars.push({ char: c, py: v.pinyin }));
         });
 
-        // 2. 截取前24个字并留一个空位
-        allChars = allChars.slice(0, 24);
-        while(allChars.length < 24) allChars.push({char: "文", py: "wén", mean: "culture"}); // 填充凑数
+        // 如果字不够，补齐到24个
+        while(chars.length < 24) chars.push({ char: "学", py: "xué" });
+        chars = chars.slice(0, 24);
         
-        tiles = allChars.map(item => ({ ...item, isEmpty: false }));
-        tiles.push({ isEmpty: true }); // 加入空格
+        // 变成对象数组
+        board = chars.map(item => ({ ...item, empty: false }));
+        board.push({ char: "", py: "", empty: true });
 
-        // 3. 洗牌
-        tiles.sort(() => Math.random() - 0.5);
+        // 随机打乱
+        board.sort(() => Math.random() - 0.5);
         render();
     }
 
     function render() {
-        const container = document.getElementById('game-container');
+        const container = document.getElementById('game-board');
         container.innerHTML = '';
-        
-        tiles.forEach((tile, index) => {
+
+        board.forEach((tile, index) => {
             const div = document.createElement('div');
-            div.className = `tile ${tile.isEmpty ? 'empty' : ''}`;
+            div.className = `tile ${tile.empty ? 'empty' : ''}`;
+            div.innerHTML = tile.empty ? '' : `<div class="popover">${tile.py}</div>${tile.char}`;
             
-            if (!tile.isEmpty) {
-                div.innerHTML = `
-                    <div class="popover">${tile.py}<br>${tile.mean}</div>
-                    <div class="char">${tile.char}</div>
-                `;
-                div.onclick = (e) => handleTileClick(index);
-            }
+            // 核心移动逻辑
+            div.onclick = () => {
+                const emptyIndex = board.findIndex(b => b.empty);
+                if (isAdjacent(index, emptyIndex)) {
+                    // 交换数据
+                    const temp = board[index];
+                    board[index] = board[emptyIndex];
+                    board[emptyIndex] = temp;
+                    render(); // 重新渲染
+                }
+            };
             container.appendChild(div);
         });
-        checkMatches();
+        checkWin();
     }
 
-    function handleTileClick(index) {
-        const emptyIndex = tiles.findIndex(t => t.isEmpty);
-        if (isAdjacent(index, emptyIndex)) {
-            // 滑动逻辑
-            [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
-            render();
-        } else {
-            // 翻转显示拼音逻辑
-            const el = document.querySelectorAll('.tile')[index];
-            el.classList.toggle('show-tip');
-            setTimeout(() => el.classList.remove('show-tip'), 3000); // 3秒后自动隐藏
-        }
+    function isAdjacent(idx1, idx2) {
+        const r1 = Math.floor(idx1 / size), c1 = idx1 % size;
+        const r2 = Math.floor(idx2 / size), c2 = idx2 % size;
+        return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
     }
 
-    function isAdjacent(i1, i2) {
-        const x1 = i1 % size, y1 = Math.floor(i1 / size);
-        const x2 = i2 % size, y2 = Math.floor(i2 / size);
-        return Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1;
-    }
-
-    // 检查是否有词语成型 (Crossword 逻辑)
-    function checkMatches() {
-        const rows = [];
-        for (let i = 0; i < size; i++) rows.push(tiles.slice(i * size, (i + 1) * size));
+    function checkWin() {
+        // 简单的横向词语检测
+        const tiles = document.querySelectorAll('.tile');
+        const currentChars = board.map(b => b.char).join('');
         
         vocabulary.forEach(v => {
-            const word = v.word;
-            // 这里可以添加逻辑：如果在某一行或列发现了连续的字，就让它们变绿
-            // 简易版：遍历页面搜索匹配
+            if (currentChars.includes(v.word)) {
+                // 如果在序列中找到了词语，可以给对应的 tile 加个颜色（演示性质）
+                console.log("拼出了词语: " + v.word);
+            }
         });
     }
 
