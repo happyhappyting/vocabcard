@@ -2,86 +2,67 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>华文词语华容道</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华容道</title>
     <style>
-        :root { --primary: #4a90e2; --success: #4caf50; --empty: #e0e0e0; }
+        :root { --primary: #4a90e2; --success: #4caf50; --empty: #eee; }
         body { font-family: system-ui; background: #fdf6e3; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        h1 { font-size: 1.5rem; margin-bottom: 5px; }
-        p { color: #666; font-size: 0.9rem; }
-        
         #game-board {
-            display: grid;
-            grid-template-columns: repeat(5, 65px); /* 5列 */
-            grid-template-rows: repeat(5, 65px);    /* 5行 */
-            gap: 8px;
-            background: #d3c6aa;
-            padding: 10px;
-            border-radius: 10px;
-            touch-action: manipulation; /* 优化移动端点击 */
+            display: grid; grid-template-columns: repeat(5, 65px); grid-template-rows: repeat(5, 65px);
+            gap: 8px; background: #d3c6aa; padding: 10px; border-radius: 10px;
         }
-
         .tile {
-            width: 65px; height: 65px; background: white;
-            border-radius: 6px; display: flex; justify-content: center;
-            align-items: center; font-size: 24px; font-weight: bold;
-            cursor: pointer; position: relative; transition: all 0.2s;
-            box-shadow: 0 3px 0 #bbb;
+            width: 65px; height: 65px; background: white; border-radius: 6px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; font-weight: bold; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 3px 0 #bbb; position: relative;
         }
-
-        .tile.empty { background: var(--empty); box-shadow: none; cursor: default; }
-        .tile.matched { background: var(--success); color: white; border-color: #2e7d32; }
-
-        /* 拼音小气泡 */
+        .tile.empty { background: var(--empty); box-shadow: none; }
+        /* 胜利/匹配后的样式 */
+        .tile.matched { background: var(--success) !important; color: white; transform: scale(1.05); z-index: 2; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .popover {
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            background: #333; color: white; padding: 2px 6px; border-radius: 4px;
-            font-size: 11px; white-space: nowrap; pointer-events: none; display: none;
+            position: absolute; bottom: 105%; background: #333; color: white;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; display: none; pointer-events: none;
         }
         .tile:active .popover { display: block; }
-
-        .controls { margin-top: 20px; }
-        button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 25px; background: var(--primary); color: white; cursor: pointer; }
+        .score-board { margin: 15px; font-size: 1.2rem; font-weight: bold; color: #555; }
+        button { padding: 10px 20px; border-radius: 20px; border: none; background: var(--primary); color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>🧩 词语华容道</h1>
-    <p>点击空格旁边的字进行移动<br>长按/点击查看拼音</p>
-
+    <h1>🧩 词语拼拼乐</h1>
+    <div class="score-board">已找到词语: <span id="match-count">0</span> / 5</div>
     <div id="game-board"></div>
-
-    <div class="controls">
-        <button onclick="initGame()">重新洗牌</button>
+    <div style="margin-top:20px;">
+        <button onclick="initGame()">换一组词</button>
     </div>
 
 <script>
-    const vocabulary = [
-        { word: "淘气", pinyin: "táo qì" }, { word: "科技", pinyin: "kē jì" },
-        { word: "人缘", pinyin: "rén yuán" }, { word: "直率", pinyin: "zhí shuài" },
-        { word: "瞬间", pinyin: "shùn jiān" }, { word: "粘", pinyin: "zhān" },
-        { word: "嚷", pinyin: "rǎng" }, { word: "律师", pinyin: "lǜ shī" }
+    // 词库
+    const allVocabulary = [
+        { word: "淘气", pinyin: "táo qì" }, { word: "两肋插刀", pinyin: "liǎng lèi chā dāo" },
+        { word: "科技", pinyin: "kē jì" }, { word: "口头禅", pinyin: "kǒu tóu chán" },
+        { word: "直率", pinyin: "zhí shuài" }, { word: "兴致勃勃", pinyin: "xìng zhì bó bó" },
+        { word: "手足无措", pinyin: "shǒu zú wú cuò" }, { word: "哑口无言", pinyin: "yǎ kǒu wú yán" }
     ];
 
-    const size = 5; 
+    const size = 5;
     let board = [];
+    let currentVocab = [];
 
     function initGame() {
-        // 准备 24 个汉字 + 1 个空格
+        // 随机选5个词进行挑战
+        currentVocab = [...allVocabulary].sort(() => Math.random() - 0.5).slice(0, 5);
         let chars = [];
-        vocabulary.forEach(v => {
-            v.word.split('').forEach(c => chars.push({ char: c, py: v.pinyin }));
+        currentVocab.forEach(v => {
+            v.word.split('').forEach(c => chars.push({ char: c, py: v.pinyin, matched: false }));
         });
 
-        // 如果字不够，补齐到24个
-        while(chars.length < 24) chars.push({ char: "学", py: "xué" });
-        chars = chars.slice(0, 24);
-        
-        // 变成对象数组
-        board = chars.map(item => ({ ...item, empty: false }));
-        board.push({ char: "", py: "", empty: true });
-
-        // 随机打乱
+        // 补齐空格
+        while(chars.length < 24) chars.push({ char: "学", py: "xué", matched: false });
+        board = chars.slice(0, 24).map(item => ({ ...item, empty: false }));
+        board.push({ char: "", empty: true });
         board.sort(() => Math.random() - 0.5);
         render();
     }
@@ -89,45 +70,56 @@
     function render() {
         const container = document.getElementById('game-board');
         container.innerHTML = '';
+        
+        // 渲染前检测胜负逻辑
+        const matchedIndices = checkMatches();
 
         board.forEach((tile, index) => {
             const div = document.createElement('div');
-            div.className = `tile ${tile.empty ? 'empty' : ''}`;
+            const isMatched = matchedIndices.has(index);
+            div.className = `tile ${tile.empty ? 'empty' : ''} ${isMatched ? 'matched' : ''}`;
             div.innerHTML = tile.empty ? '' : `<div class="popover">${tile.py}</div>${tile.char}`;
             
-            // 核心移动逻辑
             div.onclick = () => {
-                const emptyIndex = board.findIndex(b => b.empty);
-                if (isAdjacent(index, emptyIndex)) {
-                    // 交换数据
-                    const temp = board[index];
-                    board[index] = board[emptyIndex];
-                    board[emptyIndex] = temp;
-                    render(); // 重新渲染
+                const emptyIdx = board.findIndex(b => b.empty);
+                if (isAdjacent(index, emptyIdx)) {
+                    [board[index], board[emptyIdx]] = [board[emptyIdx], board[index]];
+                    render();
                 }
             };
             container.appendChild(div);
         });
-        checkWin();
+
+        document.getElementById('match-count').innerText = currentVocab.filter(v => 
+            board.map(b => b.char).join('').includes(v.word)
+        ).length;
     }
 
-    function isAdjacent(idx1, idx2) {
-        const r1 = Math.floor(idx1 / size), c1 = idx1 % size;
-        const r2 = Math.floor(idx2 / size), c2 = idx2 % size;
-        return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+    function isAdjacent(i1, i2) {
+        const r1 = Math.floor(i1/size), c1 = i1%size;
+        const r2 = Math.floor(i2/size), c2 = i2%size;
+        return Math.abs(r1-r2) + Math.abs(c1-c2) === 1;
     }
 
-    function checkWin() {
-        // 简单的横向词语检测
-        const tiles = document.querySelectorAll('.tile');
-        const currentChars = board.map(b => b.char).join('');
-        
-        vocabulary.forEach(v => {
-            if (currentChars.includes(v.word)) {
-                // 如果在序列中找到了词语，可以给对应的 tile 加个颜色（演示性质）
-                console.log("拼出了词语: " + v.word);
+    // 核心算法：检测横向是否有完整词语
+    function checkMatches() {
+        let matchedIndices = new Set();
+        // 检查每一行
+        for (let r = 0; r < size; r++) {
+            let rowStr = "";
+            for (let c = 0; c < size; c++) {
+                rowStr += board[r * size + c].char || " ";
             }
-        });
+            currentVocab.forEach(v => {
+                const startIdx = rowStr.indexOf(v.word);
+                if (startIdx !== -1) {
+                    for (let i = 0; i < v.word.length; i++) {
+                        matchedIndices.add(r * size + startIdx + i);
+                    }
+                }
+            });
+        }
+        return matchedIndices;
     }
 
     initGame();
