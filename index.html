@@ -204,12 +204,37 @@
         }
     }
 
-    function showLearningMoment(wordObj, row, colStart) {
-        isPaused = true;
-        // 视觉反馈：变绿
+function showLearningMoment(wordObj, row, colStart) {
+    isPaused = true;
+    // 视觉反馈：变绿并跳动
+    for(let i=0; i<wordObj.word.length; i++) {
+        const targetTile = document.querySelectorAll('.tile')[row*6 + colStart + i];
+        targetTile.classList.add('matched');
+    }
+
+    setTimeout(() => {
+        document.getElementById('modal-word').innerText = wordObj.word;
+        document.getElementById('modal-pinyin').innerText = wordObj.pinyin;
+        
+        // 分两行显示：第一行中文，第二行英文（灰色斜体）
+        const cnMeaning = wordObj.meaning || "";
+        const enMeaning = wordObj.meaning_en || "";
+        
+        document.getElementById('modal-meaning').innerHTML = `
+            <div style="color:#4E342E; font-weight:bold;">${cnMeaning}</div>
+            <div style="margin-top:10px; color:#777; font-size:0.9em; font-style:italic; border-top:1px dashed #eee; padding-top:10px;">
+                ${enMeaning}
+            </div>
+        `;
+
+        document.getElementById('study-modal').style.display = 'flex';
+        
+        // 延迟消除数据，确保弹窗关掉前背景还是绿色的
         for(let i=0; i<wordObj.word.length; i++) {
-            document.querySelectorAll('.tile')[row*6 + colStart + i].classList.add('matched');
+            board[row*6 + colStart + i] = {char:"", empty:true};
         }
+    }, 600);
+}
 
         setTimeout(() => {
             document.getElementById('modal-word').innerText = wordObj.word;
