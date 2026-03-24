@@ -170,7 +170,7 @@
         });
     }
 
-    function handleSelect(idx) {
+function handleSelect(idx) {
         if (selectedPath.includes(idx)) {
             selectedPath = selectedPath.filter(i => i !== idx);
             render(); return;
@@ -179,7 +179,7 @@
         selectedPath.push(idx);
         const str = selectedPath.map(i => board[i].char).join('');
         
-        // 1. 判定单元词库 (得分)
+        // 1. 优先判定单元词库 (必须完全匹配)
         const unitMatch = wordBank.find(v => v.word === str);
         if (unitMatch) {
             isBonusWord = false;
@@ -187,20 +187,28 @@
             return;
         }
 
-        // 2. 判定外部大辞典 (单字不跳，二字及以上才跳)
+        // 2. 判定外部大辞典 (单字不跳)
         if (str.length >= 2 && mainDictionary[str]) {
-            isBonusWord = true;
-            const dictEntry = mainDictionary[str];
-            showModal({
-                word: str,
-                pinyin: dictEntry.pinyin || dictEntry.pronunciation || "",
-                cn: dictEntry.definitions || dictEntry.explanation || "你知道得很多！",
-                en: dictEntry.english || ""
-            });
-            return;
+            // 【关键改进】：检查这个词是不是单元词库里某个长词的前半部分
+            // 例如：str是"兴致"，而单元词库里有"兴致勃勃"
+            const isPrefixOfUnit = wordBank.some(v => v.word.startsWith(str) && v.word !== str);
+            
+            if (!isPrefixOfUnit) {
+                // 如果它不是任何单元词的前缀，才作为百科词弹窗
+                isBonusWord = true;
+                const dictEntry = mainDictionary[str];
+                showModal({
+                    word: str,
+                    pinyin: dictEntry.pinyin || dictEntry.pronunciation || "",
+                    cn: dictEntry.definitions || dictEntry.explanation || "你知道得很多！",
+                    en: dictEntry.english || ""
+                });
+                return;
+            }
+            // 如果是前缀，我们什么都不做，让玩家继续点下一个字
         }
 
-        // 3. 静默重置逻辑 (4字不成词或无法成词前缀)
+        // 3. 静默重置逻辑
         if (str.length >= 2) {
             const canBeUnit = wordBank.some(v => v.word.startsWith(str));
             const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(str));
@@ -210,7 +218,16 @@
                 return;
             }
         }
-        if (str.length >= 4) { selectedPath = []; render(); return; }
+        
+        // 如果点到4个字还没触发上面的单元词或大辞典逻辑，重置
+        if (str.length >= 4) { 
+            // 最后的保险：如果4个字正好是大辞典里的词（比如某个成语），其实在上面str.length >= 2那里就会触发了
+            // 这里处理的是4个字完全乱点的情况
+            setTimeout(() => {
+                selectedPath = [];
+                render();
+            }, 200);
+        }
         
         render();
     }
