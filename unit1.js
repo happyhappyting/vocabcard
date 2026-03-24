@@ -10,4 +10,7 @@ const unitData = [
     { word: "别扭", pinyin: "biè niu", meaning: "不顺心；拘束；不自然。", meaning_en: "awkward; uncomfortable" },
     { word: "争辩", pinyin: "zhēng biàn", meaning: "争论辩驳。", meaning_en: "a dispute; to wrangle" },
     { word: "冤枉", pinyin: "yuān wang", meaning: "使无罪者有罪；受到不公平待遇。", meaning_en: "to accuse wrongly; treated unjustly" }
+    { word: "科技", pinyin: "kē jì", meaning: "科学技术。", meaning_en: "science and technology" },
+    { word: "推荐", pinyin: "tuī jiàn", meaning: "把好的人或事物向人介绍。", meaning_en: "to recommend" },
+    { word: "捣乱", pinyin: "dǎo luàn", meaning: "进行破坏；找麻烦。", meaning_en: "to disturb; look for trouble" },
 ];
