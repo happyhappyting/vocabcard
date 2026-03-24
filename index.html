@@ -3,33 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中学华文词语挑战 - 最终版</title>
+    <title>中学华文词语挑战 - CEDICT 增强版</title>
     <style>
         :root { --primary: #FF9800; --success: #4caf50; --bg: #FFF9C4; --text: #333; --info: #2196F3; }
         body { font-family: 'PingFang SC', "Microsoft YaHei", sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: var(--text); }
         
-        /* 界面层级 */
+        /* 登录与结算界面 */
         #login-screen, #result-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .setup-box, .result-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 300px; }
         .result-card { width: 80%; max-width: 400px; border: 5px solid var(--primary); }
         
         input, select { padding: 12px; border: 2px solid #eee; border-radius: 12px; width: 100%; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; outline: none; }
         
+        /* 状态栏 */
+        .header { background: rgba(255,255,255,0.7); width: 100%; padding: 10px 0; border-bottom: 2px solid #ddd; text-align: center; }
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 500px; margin: 0 auto; font-weight: bold; font-size: 14px; }
+
         /* 游戏板 */
         #game-board { display: grid; grid-template-columns: repeat(8, 42px); grid-template-rows: repeat(8, 42px); gap: 6px; background: rgba(255,255,255,0.4); padding: 12px; border-radius: 20px; border: 4px solid white; margin-top: 15px; }
         .tile { width: 42px; height: 42px; background: white; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; color: black; user-select: none; }
         
         .tile.active { background: #FFEB3B; transform: scale(1.1); box-shadow: 0 0 10px var(--primary); z-index: 5; }
         .tile.matched { transform: scale(0); opacity: 0; pointer-events: none; }
+        
+        /* 难度模式 */
         .easy-mode .tile.is-unit { color: var(--primary); font-weight: bold; }
+        .hard-mode .tile { color: black !important; font-weight: normal !important; }
 
         /* 弹窗样式 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; }
-        .bonus-content { border: 4px solid var(--info); }
-
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; border: 5px solid var(--primary); transition: all 0.3s; }
+        
         .score-big { font-size: 60px; font-weight: 900; color: var(--primary); margin: 10px 0; }
         button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; font-size: 24px; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -37,7 +44,7 @@
     <div id="login-screen">
         <div class="setup-box">
             <h1 style="margin:0 0 20px 0">📚 华文闯关</h1>
-            <input type="text" id="player-name" placeholder="请输入姓名">
+            <input type="text" id="player-name" placeholder="请输入姓名" maxlength="10">
             <select id="level-select">
                 <option value="hard">进阶版 (全黑/5分/满分100)</option>
                 <option value="easy">简单版 (提示/3分/满分60)</option>
@@ -48,9 +55,9 @@
     </div>
 
     <div id="game-container" style="display:none">
-        <div style="text-align:center; padding:10px; background:rgba(255,255,255,0.7); width:100%">
-            <div id="game-date" style="font-size:12px; color:#888"></div>
-            <div style="display:flex; justify-content:space-around; font-weight:bold; margin-top:5px">
+        <div class="header">
+            <div id="game-date" style="font-size:12px; color:#888; margin-bottom:5px"></div>
+            <div class="info-grid">
                 <span>👤 <span id="p-name"></span></span>
                 <span>⏰ <span id="timer">05:00</span></span>
                 <span>🏆 <span id="score">0</span></span>
@@ -64,23 +71,25 @@
             <h2 id="res-date" style="margin:0; color:#666; font-size:14px"></h2>
             <h3 id="res-name" style="margin:10px 0; font-size:24px"></h3>
             <div class="score-big" id="res-score">0分</div>
-            <div id="res-msg" style="font-size:16px; line-height:1.6; margin-bottom:20px; color:#444"></div>
+            <div id="res-msg" style="font-size:16px; line-height:1.6; margin-bottom:20px"></div>
             <button onclick="location.reload()">重新挑战</button>
         </div>
     </div>
 
     <div id="study-modal" class="modal">
-        <div class="modal-content" id="m-container">
+        <div class="modal-content" id="m-content">
+            <button class="tts-btn" onclick="speakWord()">🔊</button>
             <h2 id="m-word" style="font-size: 2.5rem; margin:10px 0"></h2>
-            <p id="m-pinyin" style="color:var(--primary); font-size:1.2rem"></p>
-            <div id="m-info-box" style="text-align:left; background:#f9f9f9; padding:15px; border-radius:15px; margin:15px 0">
-                <div id="m-cn" style="font-weight:bold"></div>
+            <p id="m-pinyin" style="color:var(--primary); font-size: 1.2rem;"></p>
+            <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:15px; margin:15px 0">
+                <div id="m-cn" style="font-weight:bold; line-height:1.4"></div>
             </div>
             <button id="m-btn" onclick="closeModal()">记住了</button>
         </div>
     </div>
 
     <script>
+        // --- 数据配置 ---
         const wordBank = [
             { word: "淘气", pinyin: "táo qì", cn: "顽皮；爱捣蛋。" },
             { word: "直率", pinyin: "zhí shuài", cn: "坦率；直爽。" },
@@ -104,52 +113,68 @@
             { word: "拉扯", pinyin: "lā che", cn: "用力拉住。" }
         ];
 
-        const unitChars = new Set(wordBank.map(item => item.word).join(''));
-        let bigDict = new Set(), board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
-        let gameMode = 'hard', perScore = 5, isBonusActive = false;
+        // 提取单元词所有单字用于过滤
+        const unitChars = new Set(wordBank.map(i => i.word).join(''));
+        let bigDict = []; // 存储 CEDICT 词典
+        let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
+        let gameMode = 'hard', perScore = 5, isBonusMode = false;
 
-        // 初始化日期
+        // --- 初始化日期 ---
         const today = new Date();
         const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
         document.getElementById('today-date').innerText = "今天是: " + dateStr;
         document.getElementById('game-date').innerText = dateStr;
 
-        async function loadDict() {
+        // --- 核心逻辑 ---
+
+        // 加载 CEDICT 词典
+        async function loadDictionary() {
             try {
-                const r = await fetch('dictionary.json');
-                const d = await r.json();
-                bigDict = new Set(d);
-            } catch(e) { console.log("百科词典加载略过"); }
+                const response = await fetch('dictionary.json');
+                bigDict = await response.json();
+                console.log("CEDICT 词典就绪");
+            } catch (e) {
+                console.error("词典加载失败，请确保 dictionary.json 在同目录", e);
+            }
         }
-        loadDict();
+        loadDictionary();
 
         function startGame() {
             const name = document.getElementById('player-name').value.trim();
             if(!name) return alert("请输入姓名！");
             gameMode = document.getElementById('level-select').value;
             perScore = (gameMode === 'easy') ? 3 : 5;
+            
             document.getElementById('p-name').innerText = name;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            document.body.className = gameMode === 'easy' ? 'easy-mode' : 'hard-mode';
+            document.body.className = (gameMode === 'easy' ? 'easy-mode' : 'hard-mode');
+            
             initBoard();
             timerPtr = setInterval(updateTimer, 1000);
         }
 
+        // 干扰项生成：绝对避开单元词库中的字
         function getSafeFiller() {
-            const pool = "的一是在不了有道个人说们中上他大知地出下子自于以发成而方书";
-            let c;
-            do { c = pool[Math.floor(Math.random()*pool.length)]; } while(unitChars.has(c));
-            return c;
+            const commonChars = "的一是在不了有道个人说们中上他大知地出下子自于以发成而方书常用常用";
+            let char;
+            do {
+                char = commonChars[Math.floor(Math.random() * commonChars.length)];
+            } while (unitChars.has(char));
+            return char;
         }
 
         function initBoard() {
             let chars = [];
+            // 随机选出本关要出现的 20 个单元词
             const targets = [...wordBank].sort(() => Math.random() - 0.5).slice(0, 20);
             targets.forEach(v => {
                 v.word.split('').forEach(c => chars.push({ char: c, wordObj: v }));
             });
-            while(chars.length < 64) chars.push({ char: getSafeFiller(), wordObj: null });
+            // 补齐 64 格
+            while(chars.length < 64) {
+                chars.push({ char: getSafeFiller(), wordObj: null });
+            }
             board = chars.sort(() => Math.random() - 0.5);
             render();
         }
@@ -166,54 +191,85 @@
             });
         }
 
+        // 核心：处理点击（解决重复字直觉问题）
         function handleSelect(idx) {
             const selIdx = selectedPath.indexOf(idx);
-            if (selIdx > -1) { selectedPath.splice(selIdx, 1); render(); return; }
+            // 如果已选中则取消
+            if (selIdx > -1) {
+                selectedPath.splice(selIdx, 1);
+                render();
+                return;
+            }
 
             selectedPath.push(idx);
             render();
 
             const currentStr = selectedPath.map(i => board[i].char).join('');
-            const matchUnit = wordBank.find(b => b.word === currentStr);
-
+            
+            // 1. 检查是否匹配单元词
+            const matchUnit = wordBank.find(item => item.word === currentStr);
             if (matchUnit) {
                 score += perScore;
                 document.getElementById('score').innerText = score;
+                speak(matchUnit.word);
                 showModal(matchUnit, false);
-            } else if (currentStr.length >= 2 && bigDict.has(currentStr)) {
-                showModal({word: currentStr, pinyin: "发现课外词!", cn: "这证明你的词汇量很棒！继续寻找关卡词吧。"}, true);
-            } else if (currentStr.length >= 4) {
+                return;
+            }
+
+            // 2. 检查是否匹配 CEDICT 课外词
+            if (currentStr.length >= 2) {
+                const extraWord = bigDict.find(item => item.word === currentStr || item.simplified === currentStr);
+                if (extraWord) {
+                    showModal({
+                        word: currentStr,
+                        pinyin: extraWord.pinyin || "发现课外词",
+                        cn: "【百科词条】" + (extraWord.definition || "这证明你的词汇量很棒！继续寻找关卡词吧。")
+                    }, true);
+                    return;
+                }
+            }
+
+            // 3. 自动重置逻辑：达到4字未中则清空
+            if (currentStr.length >= 4) {
                 setTimeout(() => { selectedPath = []; render(); }, 300);
             }
         }
 
         function showModal(v, isBonus) {
-            isBonusActive = isBonus;
-            const container = document.getElementById('m-container');
-            container.className = isBonus ? 'modal-content bonus-content' : 'modal-content';
+            isBonusMode = isBonus;
+            const modalContent = document.getElementById('m-content');
             
+            // UI 适配
+            modalContent.style.borderColor = isBonus ? "var(--info)" : "var(--primary)";
             document.getElementById('m-word').innerText = v.word;
             document.getElementById('m-pinyin').innerText = v.pinyin;
             document.getElementById('m-cn').innerText = v.cn;
-            document.getElementById('m-btn').innerText = isBonus ? "继续寻找" : "记住了";
-            document.getElementById('m-btn').style.background = isBonus ? "#2196F3" : "#FF9800";
+            document.getElementById('m-btn').innerText = isBonus ? "这就是实力！继续" : "记住了";
+            document.getElementById('m-btn').style.background = isBonus ? "var(--info)" : "var(--primary)";
+            
             document.getElementById('study-modal').style.display = 'flex';
         }
 
         function closeModal() {
-            if (!isBonusActive) {
-                selectedPath.forEach(idx => board[idx] = { char: getSafeFiller(), wordObj: null });
+            // 如果是单元词匹配成功，则消除方块并填补
+            if (!isBonusMode) {
+                selectedPath.forEach(idx => {
+                    board[idx] = { char: getSafeFiller(), wordObj: null };
+                });
             }
+            // 重置选中状态
             selectedPath = [];
             document.getElementById('study-modal').style.display = 'none';
             render();
-            const max = (gameMode === 'easy' ? 60 : 100);
-            if (score >= max) endGame();
+
+            // 检查过关
+            const maxScore = (gameMode === 'easy' ? 60 : 100);
+            if (score >= maxScore) endGame();
         }
 
         function updateTimer() {
-            // 只有学习弹窗（非百科）时才暂停时间
-            if (document.getElementById('study-modal').style.display === 'flex' && !isBonusActive) return;
+            // 只有当“单元学习弹窗”出现时才暂停计时；百科弹窗不暂停
+            if (document.getElementById('study-modal').style.display === 'flex' && !isBonusMode) return;
             
             timeLeft--;
             let m = Math.floor(timeLeft/60), s = timeLeft%60;
@@ -224,7 +280,8 @@
         function endGame() {
             clearInterval(timerPtr);
             document.getElementById('game-container').style.display = 'none';
-            document.getElementById('result-screen').style.display = 'flex';
+            const resScreen = document.getElementById('result-screen');
+            resScreen.style.display = 'flex';
             
             document.getElementById('res-date').innerText = dateStr;
             document.getElementById('res-name').innerText = "闯关者: " + document.getElementById('p-name').innerText;
@@ -244,6 +301,13 @@
                 msgBox.innerHTML = "😅 还没及格哦，不要气馁！<br>失败是成功之母，再挑战一次吧！🌱📖";
             }
         }
+
+        function speak(text) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'zh-CN';
+            window.speechSynthesis.speak(msg);
+        }
+        function speakWord() { speak(document.getElementById('m-word').innerText); }
     </script>
 </body>
 </html>
