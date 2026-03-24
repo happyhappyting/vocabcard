@@ -10,66 +10,72 @@
         
         /* 登录界面 */
         #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .input-group { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        input { padding: 12px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; width: 200px; font-size: 16px; }
+        .input-box { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        input { padding: 15px; border: 2px solid #eee; border-radius: 12px; width: 220px; font-size: 18px; margin-bottom: 20px; outline: none; }
+        
+        /* 状态栏 */
+        .header { background: rgba(255,255,255,0.7); width: 100%; padding: 10px 0; border-bottom: 2px solid #eee; text-align: center; font-size: 14px; }
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 500px; margin: 0 auto; gap: 10px; font-weight: bold; }
 
-        /* 顶部信息栏 */
-        .status-bar { display: flex; gap: 20px; padding: 15px; font-weight: bold; font-size: 14px; background: rgba(255,255,255,0.5); width: 100%; justify-content: center; }
+        /* 游戏板 */
+        #game-board { display: grid; grid-template-columns: repeat(8, 42px); grid-template-rows: repeat(8, 42px); gap: 6px; background: rgba(255,255,255,0.4); padding: 12px; border-radius: 20px; border: 4px solid white; margin-top: 15px; }
+        .tile { width: 42px; height: 42px; background: white; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 #ddd; user-select: none; }
         
-        /* 游戏主体 */
-        #game-container { display: none; flex-direction: column; align-items: center; width: 100%; }
-        #game-board { display: grid; grid-template-columns: repeat(8, 45px); grid-template-rows: repeat(8, 45px); gap: 5px; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 15px; border: 3px solid white; margin-top: 10px; }
-        
-        .tile { width: 45px; height: 45px; background: white; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 3px 0 #ddd; user-select: none; }
-        .tile.selected { transform: scale(0.9); border: 2px solid var(--primary); background: #FFF3E0; }
-        .tile.matched { background: var(--success) !important; color: white; transform: scale(1.1); font-weight: bold; }
-        .tile.filler { color: #bbb; font-weight: normal; }
+        /* 选中状态 */
+        .tile.active { background: #FFEB3B; transform: scale(1.1); box-shadow: 0 0 15px var(--primary); z-index: 10; border: 2px solid var(--primary); }
+        .tile.matched { background: var(--success) !important; color: white !important; transform: scale(0); transition: 0.5s; }
+        .tile.filler { color: #ccc; }
 
-        /* 弹窗样式 */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 500; }
-        .modal-content { background: white; padding: 25px; border-radius: 24px; text-align: center; width: 280px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .meaning-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 15px; margin-top: 10px; border-left: 5px solid var(--primary); }
+        /* 弹窗 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 500; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 300px; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
+        .tts-btn { background: #2196F3; border-radius: 50%; width: 40px; height: 40px; margin-bottom: 10px; cursor: pointer; color: white; border: none; font-size: 20px; }
         
-        button { padding: 12px 25px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
+        .score-bar { font-size: 24px; color: var(--primary); margin: 10px 0; font-weight: 900; }
+        button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <div class="input-group">
-            <h2>🎒 欢迎闯关</h2>
-            <input type="text" id="player-name" placeholder="请输入你的姓名" maxlength="10">
+        <div class="input-box">
+            <h1 style="margin-top:0">🎯 词语大挑战</h1>
+            <input type="text" id="player-name" placeholder="输入姓名..." maxlength="8">
             <br>
-            <button onclick="startGame()">进入游戏</button>
-            <p id="hiscore-msg" style="font-size: 12px; color: #888; margin-top: 10px;"></p>
+            <button onclick="startGame()">开始学习</button>
+            <div id="date-display" style="margin-top:20px; color:#888; font-size:14px"></div>
         </div>
     </div>
 
-    <div id="game-container">
-        <div class="status-bar">
-            <span>👤: <span id="display-name"></span></span>
-            <span>⏰: <span id="timer">05:00</span></span>
-            <span>🏆: <span id="score">0</span>/100</span>
+    <div id="game-container" style="display:none">
+        <div class="header">
+            <div id="current-date" style="margin-bottom:5px; color:#666"></div>
+            <div class="info-grid">
+                <span>👤 <span id="p-name"></span></span>
+                <span>⏰ <span id="timer">05:00</span></span>
+                <span>🏆 <span id="score">0</span>/100</span>
+            </div>
         </div>
-        
+
         <div id="game-board"></div>
-        <p style="font-size: 12px; color: #888; margin-top: 10px;">💡 提示：点击两个相邻字交换，拼成词语即可消除！</p>
+        <div class="score-bar">加油！</div>
     </div>
 
     <div id="study-modal" class="modal">
         <div class="modal-content">
-            <h2 id="m-word" style="color:var(--primary); margin:0; font-size: 2.5rem;"></h2>
-            <p id="m-pinyin" style="color:#666; font-size: 1.2rem; margin: 5px 0;"></p>
-            <div class="meaning-box">
-                <div id="m-cn" style="font-weight:bold;"></div>
-                <div id="m-en" style="color:#888; font-size: 0.9em; margin-top:8px; font-style:italic;"></div>
+            <button class="tts-btn" onclick="speakWord()">🔊</button>
+            <h2 id="m-word" style="margin:5px 0; font-size: 2.8rem; color:var(--text)"></h2>
+            <p id="m-pinyin" style="color:var(--primary); font-size: 1.3rem; margin-bottom:15px"></p>
+            <div style="text-align:left; background:#f5f5f5; padding:15px; border-radius:15px">
+                <div id="m-cn" style="font-weight:bold; margin-bottom:5px"></div>
+                <div id="m-en" style="color:#888; font-size:0.85rem; font-style:italic"></div>
             </div>
-            <button style="margin-top:20px; width:100%" onclick="closeModal()">我学会了 (+5分)</button>
+            <button style="margin-top:20px; width:100%" onclick="closeModal()">记住了</button>
         </div>
     </div>
 
     <script>
-        // --- 1. 词库（你可以继续往里加，系统会自动选20个） ---
         const wordBank = [
             { word: "淘气", pinyin: "táo qì", cn: "顽皮；爱捣蛋。", en: "naughty; mischievous" },
             { word: "直率", pinyin: "zhí shuài", cn: "坦率；直爽。", en: "candid; frank" },
@@ -93,50 +99,38 @@
             { word: "拉扯", pinyin: "lā che", cn: "用力拉住。", en: "to pull" }
         ];
 
-        const fillerPool = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
+        const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
+        let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
 
-        // --- 2. 核心变量 ---
-        let board = [];
-        let score = 0;
-        let timeLeft = 300; // 5分钟
-        let timerPtr = null;
-        let selectedIdx = null;
-        let targetWords = [];
-        let isPaused = false;
+        // 显示系统日期
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+        document.getElementById('date-display').innerText = dateStr;
+        document.getElementById('current-date').innerText = dateStr;
 
-        // 加载历史最高分
-        window.onload = () => {
-            const savedName = localStorage.getItem('lastPlayer');
-            const savedScore = localStorage.getItem('highScore') || 0;
-            if(savedName) {
-                document.getElementById('player-name').value = savedName;
-                document.getElementById('hiscore-msg').innerText = `上次玩家: ${savedName} | 最高分: ${savedScore}`;
-            }
-        };
-
-        // --- 3. 游戏逻辑 ---
         function startGame() {
             const name = document.getElementById('player-name').value.trim();
             if(!name) return alert("请输入姓名！");
-            
-            localStorage.setItem('lastPlayer', name);
-            document.getElementById('display-name').innerText = name;
+            document.getElementById('p-name').innerText = name;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
             
             initBoard();
-            startTimer();
+            timerPtr = setInterval(updateTimer, 1000);
         }
 
         function initBoard() {
-            // 随机选20个词
-            targetWords = [...wordBank].sort(() => Math.random() - 0.5).slice(0, 20);
             let chars = [];
-            targetWords.forEach(v => v.word.split('').forEach(c => chars.push({ char: c, wordObj: v, isTarget: true })));
-            
-            // 填满 8x8 = 64 格
+            // 选20个目标词
+            const targets = [...wordBank].sort(() => Math.random() - 0.5).slice(0, 20);
+            targets.forEach(v => {
+                v.word.split('').forEach((c, idx) => {
+                    chars.push({ char: c, wordObj: v, charIdx: idx });
+                });
+            });
+            // 填满 64 格
             while(chars.length < 64) {
-                chars.push({ char: fillerPool[Math.floor(Math.random()*fillerPool.length)], isTarget: false });
+                chars.push({ char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null });
             }
             board = chars.sort(() => Math.random() - 0.5);
             render();
@@ -147,102 +141,108 @@
             container.innerHTML = '';
             board.forEach((tile, i) => {
                 const div = document.createElement('div');
-                div.className = `tile ${!tile.isTarget ? 'filler' : ''} ${selectedIdx === i ? 'selected' : ''}`;
+                div.className = `tile ${!tile.wordObj ? 'filler' : ''} ${selectedPath.includes(i) ? 'active' : ''}`;
                 div.innerText = tile.char;
-                div.onclick = () => handleTileClick(i);
+                div.onclick = () => handleSelect(i);
                 container.appendChild(div);
             });
-            checkMatches();
         }
 
-        function handleTileClick(idx) {
-            if(isPaused) return;
-            if(selectedIdx === null) {
-                selectedIdx = idx;
-            } else {
-                const r1 = Math.floor(selectedIdx/8), c1 = selectedIdx%8, r2 = Math.floor(idx/8), c2 = idx%8;
-                // 只能交换相邻
-                if(Math.abs(r1-r2) + Math.abs(c1-c2) === 1) {
-                    [board[selectedIdx], board[idx]] = [board[idx], board[selectedIdx]];
-                    selectedIdx = null;
-                } else {
-                    selectedIdx = idx; // 换选
-                }
+        function handleSelect(idx) {
+            const tile = board[idx];
+            // 如果点的是干扰字，直接无效并清空当前选择
+            if (!tile.wordObj) {
+                selectedPath = [];
+                render();
+                return;
             }
+
+            // 逻辑核心：必须按顺序点按
+            const currentClickIdxInWord = tile.charIdx; // 当前点的是这个词的第几个字
+            const expectedIdx = selectedPath.length;   // 我们期望点的是第几个字
+
+            if (currentClickIdxInWord === expectedIdx) {
+                // 如果是新词的第一字，或者是当前词的正确下一字
+                if (expectedIdx > 0) {
+                    const firstTile = board[selectedPath[0]];
+                    if (tile.wordObj.word !== firstTile.wordObj.word) {
+                        // 点了另一个词的后续字，重置
+                        selectedPath = [idx];
+                    } else {
+                        selectedPath.push(idx);
+                    }
+                } else {
+                    selectedPath.push(idx);
+                }
+            } else {
+                // 点错了顺序，或者点成了第一字（但不是预期的第一字）
+                selectedPath = (currentClickIdxInWord === 0) ? [idx] : [];
+            }
+
             render();
+            checkMatch();
         }
 
-        function checkMatches() {
-            targetWords.forEach((v, vIdx) => {
-                let foundIndices = [];
-                // 横向扫
-                for (let r = 0; r < 8; r++) {
-                    let rowStr = "";
-                    for (let c = 0; c < 8; c++) rowStr += board[r*8+c].char;
-                    const s = rowStr.indexOf(v.word);
-                    if(s !== -1) {
-                        for(let i=0; i<v.word.length; i++) foundIndices.push(r*8+s+i);
-                    }
-                }
-                // 纵向扫
-                if(foundIndices.length === 0) {
-                    for (let c = 0; c < 8; c++) {
-                        let colStr = "";
-                        for (let r = 0; r < 8; r++) colStr += board[r*8+c].char;
-                        const s = colStr.indexOf(v.word);
-                        if(s !== -1) {
-                            for(let i=0; i<v.word.length; i++) foundIndices.push((s+i)*8+c);
-                        }
-                    }
-                }
+        function checkMatch() {
+            if (selectedPath.length === 0) return;
+            const firstTile = board[selectedPath[0]];
+            const targetWord = firstTile.wordObj;
 
-                if(foundIndices.length > 0) {
-                    isPaused = true;
-                    foundIndices.forEach(i => document.querySelectorAll('.tile')[i].classList.add('matched'));
-                    setTimeout(() => showModal(v, vIdx, foundIndices), 600);
-                }
-            });
-        }
+            if (selectedPath.length === targetWord.word.length) {
+                // 成功拼成一个词
+                score += 5;
+                document.getElementById('score').innerText = score;
+                
+                // 语音朗读
+                speak(targetWord.word);
 
-        function showModal(v, vIdx, indices) {
-            document.getElementById('m-word').innerText = v.word;
-            document.getElementById('m-pinyin').innerText = v.pinyin;
-            document.getElementById('m-cn').innerText = v.cn;
-            document.getElementById('m-en').innerText = v.en;
-            document.getElementById('study-modal').style.display = 'flex';
-            
-            // 消除逻辑：填充新干扰字
-            indices.forEach(i => {
-                board[i] = { char: fillerPool[Math.floor(Math.random()*fillerPool.length)], isTarget: false };
-            });
-            targetWords.splice(vIdx, 1);
-            score += 5;
-            document.getElementById('score').innerText = score;
+                // 弹出学习框
+                setTimeout(() => {
+                    document.getElementById('m-word').innerText = targetWord.word;
+                    document.getElementById('m-pinyin').innerText = targetWord.wordObj?.pinyin || ""; // 兼容处理
+                    // 这里由于逻辑变动，直接从 bank 找更稳
+                    const ref = wordBank.find(w => w.word === targetWord.word);
+                    document.getElementById('m-pinyin').innerText = ref.pinyin;
+                    document.getElementById('m-cn').innerText = ref.cn;
+                    document.getElementById('m-en').innerText = ref.en;
+                    document.getElementById('study-modal').style.display = 'flex';
+                }, 300);
+            }
         }
 
         function closeModal() {
+            // 消除已选中的块，换成干扰字
+            selectedPath.forEach(idx => {
+                board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null };
+            });
+            selectedPath = [];
             document.getElementById('study-modal').style.display = 'none';
-            isPaused = false;
             render();
-            if(score >= 100) endGame(true);
+            if (score >= 100) endGame(true);
         }
 
-        function startTimer() {
-            timerPtr = setInterval(() => {
-                if(isPaused) return;
-                timeLeft--;
-                let m = Math.floor(timeLeft/60), s = timeLeft%60;
-                document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                if(timeLeft <= 0) endGame(false);
-            }, 1000);
+        function speak(text) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'zh-CN';
+            msg.rate = 0.8;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function speakWord() {
+            speak(document.getElementById('m-word').innerText);
+        }
+
+        function updateTimer() {
+            if (document.getElementById('study-modal').style.display === 'flex') return;
+            timeLeft--;
+            let m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft <= 0) endGame(false);
         }
 
         function endGame(win) {
             clearInterval(timerPtr);
-            const oldScore = localStorage.getItem('highScore') || 0;
-            if(score > oldScore) localStorage.setItem('highScore', score);
-            
-            alert(win ? `🎉 恭喜达成100分！` : `⏰ 时间到！最终得分: ${score}`);
+            alert(win ? "🏆 太棒了！满分通关！" : "⏰ 时间到！继续努力！");
             location.reload();
         }
     </script>
