@@ -2,127 +2,241 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>华容道</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>华文词语消消乐 - 学习增强版</title>
     <style>
-        :root { --primary: #4a90e2; --success: #4caf50; --empty: #eee; }
-        body { font-family: system-ui; background: #fdf6e3; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        :root {
+            --primary: #FF9800;
+            --success: #4caf50;
+            --bg-yellow: #FFF9C4;
+            --glass: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background-color: var(--bg-yellow);
+            margin: 0; display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow: hidden; position: relative;
+        }
+
+        /* 背景漂浮 */
+        #emoji-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .floating-emoji { position: absolute; font-size: 2rem; opacity: 0.3; animation: float linear infinite; }
+        @keyframes float { from { transform: translateY(110vh); } to { transform: translateY(-10vh); } }
+
+        /* 磨砂UI */
+        .setup-bar {
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 15px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin: 15px 0; display: flex; gap: 8px; z-index: 10;
+        }
+
+        #timer { font-size: 1.2rem; font-weight: bold; color: #E64A19; margin-bottom: 5px; }
+
         #game-board {
-            display: grid; grid-template-columns: repeat(5, 65px); grid-template-rows: repeat(5, 65px);
-            gap: 8px; background: #d3c6aa; padding: 10px; border-radius: 10px;
+            display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(6, 55px);
+            gap: 8px; background: rgba(255, 255, 255, 0.3); padding: 12px; border-radius: 18px;
+            border: 2px solid white; display: none;
         }
+
         .tile {
-            width: 65px; height: 65px; background: white; border-radius: 6px;
+            width: 55px; height: 55px; background: white; border-radius: 12px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 24px; font-weight: bold; cursor: pointer; transition: all 0.3s;
-            box-shadow: 0 3px 0 #bbb; position: relative;
+            font-size: 20px; font-weight: bold; color: #4E342E;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 0 #bbb;
         }
-        .tile.empty { background: var(--empty); box-shadow: none; }
-        /* 胜利/匹配后的样式 */
-        .tile.matched { background: var(--success) !important; color: white; transform: scale(1.05); z-index: 2; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .popover {
-            position: absolute; bottom: 105%; background: #333; color: white;
-            padding: 4px 8px; border-radius: 4px; font-size: 12px; display: none; pointer-events: none;
+        .tile.empty { background: transparent; box-shadow: none; }
+        
+        /* 消除动画 */
+        .tile.matched { 
+            background: var(--success) !important; color: white; 
+            animation: celebrate 0.5s ease infinite; 
         }
-        .tile:active .popover { display: block; }
-        .score-board { margin: 15px; font-size: 1.2rem; font-weight: bold; color: #555; }
-        button { padding: 10px 20px; border-radius: 20px; border: none; background: var(--primary); color: white; cursor: pointer; }
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 学习弹窗 & 结算 */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 24px; text-align: center;
+            max-width: 80%; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .modal-content h2 { margin-top: 0; color: var(--primary); }
+        .pinyin-box { font-size: 1.2rem; color: #666; margin: 10px 0; }
+        .meaning-box { font-size: 1.1rem; color: #333; line-height: 1.5; background: #f9f9f9; padding: 15px; border-radius: 12px; }
+
+        select, button { padding: 10px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-main { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
-    <h1>🧩 词语拼拼乐</h1>
-    <div class="score-board">已找到词语: <span id="match-count">0</span> / 5</div>
+    <div id="emoji-bg"></div>
+    <h1>✨ 华文大闯关</h1>
+
+    <div class="setup-bar">
+        <select id="unit-select"><option value="unit1">单元一</option></select>
+        <select id="diff-select">
+            <option value="5">初级 (无时限)</option>
+            <option value="8">中级 (120秒)</option>
+            <option value="11">高级 (180秒)</option>
+        </select>
+        <button class="btn-main" onclick="loadUnitScript()">确认开始</button>
+    </div>
+
+    <div id="timer"></div>
     <div id="game-board"></div>
-    <div style="margin-top:20px;">
-        <button onclick="initGame()">换一组词</button>
+
+    <div id="study-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-word">词语</h2>
+            <div class="pinyin-box" id="modal-pinyin">pīn yīn</div>
+            <div class="meaning-box" id="modal-meaning">解释内容...</div>
+            <button class="btn-main" style="margin-top:20px; width:100%" onclick="closeModal()">记住了，继续！</button>
+        </div>
+    </div>
+
+    <div id="end-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="end-title">游戏结束</h2>
+            <p id="end-msg"></p>
+            <button class="btn-main" onclick="location.reload()">返回主菜单</button>
+        </div>
     </div>
 
 <script>
-    // 词库
-    const allVocabulary = [
-        { word: "淘气", pinyin: "táo qì" }, { word: "两肋插刀", pinyin: "liǎng lèi chā dāo" },
-        { word: "科技", pinyin: "kē jì" }, { word: "口头禅", pinyin: "kǒu tóu chán" },
-        { word: "直率", pinyin: "zhí shuài" }, { word: "兴致勃勃", pinyin: "xìng zhì bó bó" },
-        { word: "手足无措", pinyin: "shǒu zú wú cuò" }, { word: "哑口无言", pinyin: "yǎ kǒu wú yán" }
-    ];
+    let board = [], targetWords = [], timerPtr = null;
+    let timeLeft = 0, isPaused = false;
+    const boardSize = 6;
 
-    const size = 5;
-    let board = [];
-    let currentVocab = [];
+    // 装饰背景
+    const emojis = ['🍎', '💡', '📖', '✏️', '🌟'];
+    for(let i=0; i<12; i++) {
+        let el = document.createElement('div');
+        el.className = 'floating-emoji'; el.innerText = emojis[i%5];
+        el.style.left = Math.random()*100+'vw'; el.style.animationDuration = (8+Math.random()*10)+'s';
+        document.getElementById('emoji-bg').appendChild(el);
+    }
 
-    function initGame() {
-        // 随机选5个词进行挑战
-        currentVocab = [...allVocabulary].sort(() => Math.random() - 0.5).slice(0, 5);
+    function loadUnitScript() {
+        const unit = document.getElementById('unit-select').value;
+        const script = document.createElement('script');
+        script.src = `${unit}.js`;
+        script.onload = () => startGame(unitData);
+        script.onerror = () => alert("请确保 unit1.js 已上传到仓库");
+        document.head.appendChild(script);
+    }
+
+    function startGame(data) {
+        const diff = parseInt(document.getElementById('diff-select').value);
+        targetWords = [...data].sort(() => Math.random() - 0.5).slice(0, diff);
+        
+        // 倒计时逻辑
+        clearInterval(timerPtr);
+        if(diff === 8) timeLeft = 120;
+        else if(diff === 11) timeLeft = 180;
+        else timeLeft = 0;
+
+        if(timeLeft > 0) {
+            timerPtr = setInterval(() => {
+                if(!isPaused) {
+                    timeLeft--;
+                    document.getElementById('timer').innerText = `⏰ 倒计时: ${timeLeft}s`;
+                    if(timeLeft <= 0) endGame(false);
+                }
+            }, 1000);
+        } else {
+            document.getElementById('timer').innerText = "💡 模式：轻松练习";
+        }
+
+        // 初始化棋盘
         let chars = [];
-        currentVocab.forEach(v => {
-            v.word.split('').forEach(c => chars.push({ char: c, py: v.pinyin, matched: false }));
-        });
-
-        // 补齐空格
-        while(chars.length < 24) chars.push({ char: "学", py: "xué", matched: false });
-        board = chars.slice(0, 24).map(item => ({ ...item, empty: false }));
-        board.push({ char: "", empty: true });
-        board.sort(() => Math.random() - 0.5);
+        targetWords.forEach(v => v.word.split('').forEach(c => chars.push({char:c, wordObj:v, empty:false})));
+        while(chars.length < 36) chars.push({char:"", empty:true});
+        board = chars.sort(() => Math.random() - 0.5);
+        
+        document.querySelector('.setup-bar').style.display = 'none';
+        document.getElementById('game-board').style.display = 'grid';
         render();
     }
 
     function render() {
         const container = document.getElementById('game-board');
         container.innerHTML = '';
-        
-        // 渲染前检测胜负逻辑
-        const matchedIndices = checkMatches();
-
-        board.forEach((tile, index) => {
+        board.forEach((tile, i) => {
             const div = document.createElement('div');
-            const isMatched = matchedIndices.has(index);
-            div.className = `tile ${tile.empty ? 'empty' : ''} ${isMatched ? 'matched' : ''}`;
-            div.innerHTML = tile.empty ? '' : `<div class="popover">${tile.py}</div>${tile.char}`;
-            
-            div.onclick = () => {
-                const emptyIdx = board.findIndex(b => b.empty);
-                if (isAdjacent(index, emptyIdx)) {
-                    [board[index], board[emptyIdx]] = [board[emptyIdx], board[index]];
-                    render();
-                }
-            };
+            div.className = `tile ${tile.empty ? 'empty' : ''}`;
+            div.innerText = tile.char;
+            div.onclick = () => moveTile(i);
             container.appendChild(div);
         });
-
-        document.getElementById('match-count').innerText = currentVocab.filter(v => 
-            board.map(b => b.char).join('').includes(v.word)
-        ).length;
+        checkMatches();
     }
 
-    function isAdjacent(i1, i2) {
-        const r1 = Math.floor(i1/size), c1 = i1%size;
-        const r2 = Math.floor(i2/size), c2 = i2%size;
-        return Math.abs(r1-r2) + Math.abs(c1-c2) === 1;
+    function moveTile(idx) {
+        if (board[idx].empty || isPaused) return;
+        const emptyIdx = board.findIndex(b => b.empty);
+        const r1 = Math.floor(idx/6), c1 = idx%6, r2 = Math.floor(emptyIdx/6), c2 = emptyIdx%6;
+        if (Math.abs(r1-r2) + Math.abs(c1-c2) === 1) {
+            [board[idx], board[emptyIdx]] = [board[emptyIdx], board[idx]];
+            render();
+        }
     }
 
-    // 核心算法：检测横向是否有完整词语
     function checkMatches() {
-        let matchedIndices = new Set();
-        // 检查每一行
-        for (let r = 0; r < size; r++) {
-            let rowStr = "";
-            for (let c = 0; c < size; c++) {
-                rowStr += board[r * size + c].char || " ";
-            }
-            currentVocab.forEach(v => {
-                const startIdx = rowStr.indexOf(v.word);
-                if (startIdx !== -1) {
-                    for (let i = 0; i < v.word.length; i++) {
-                        matchedIndices.add(r * size + startIdx + i);
-                    }
+        for (let r = 0; r < 6; r++) {
+            let rowChars = "";
+            for (let c = 0; c < 6; c++) rowChars += board[r*6+c].char || " ";
+            
+            targetWords.forEach((v, vIdx) => {
+                const start = rowChars.indexOf(v.word);
+                if (start !== -1) {
+                    showLearningMoment(v, r, start);
+                    targetWords.splice(vIdx, 1); // 从目标中移除
                 }
             });
         }
-        return matchedIndices;
     }
 
-    initGame();
+    function showLearningMoment(wordObj, row, colStart) {
+        isPaused = true;
+        // 视觉反馈：变绿
+        for(let i=0; i<wordObj.word.length; i++) {
+            document.querySelectorAll('.tile')[row*6 + colStart + i].classList.add('matched');
+        }
+
+        setTimeout(() => {
+            document.getElementById('modal-word').innerText = wordObj.word;
+            document.getElementById('modal-pinyin').innerText = wordObj.pinyin || wordObj.py;
+            document.getElementById('modal-meaning').innerText = wordObj.meaning || "暂无解释";
+            document.getElementById('study-modal').style.display = 'flex';
+            
+            // 消除数据
+            for(let i=0; i<wordObj.word.length; i++) {
+                board[row*6 + colStart + i] = {char:"", empty:true};
+            }
+        }, 600);
+    }
+
+    function closeModal() {
+        document.getElementById('study-modal').style.display = 'none';
+        isPaused = false;
+        render();
+        if(targetWords.length === 0) endGame(true);
+    }
+
+    function endGame(win) {
+        clearInterval(timerPtr);
+        document.getElementById('end-modal').style.display = 'flex';
+        document.getElementById('end-title').innerText = win ? "🎉 闯关成功！" : "⏰ 时间到";
+        document.getElementById('end-msg').innerText = win ? "你太厉害了，所有的词语都掌握了！" : "别灰心，再试一次吧！";
+    }
 </script>
 </body>
 </html>
