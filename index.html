@@ -3,300 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中学华文词语挑战 - 智能索引版</title>
+    <title>华文闯关 - 智能辞典版</title>
     <style>
-        :root { --primary: #FF9800; --bg: #FFF9C4; --text: #333; --info: #007AFF; --pink: #FF66A1; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: var(--text); overflow-x: hidden; }
+        :root { --primary: #FF9800; --bg: #FFF9C4; --info: #007AFF; --pink: #FF66A1; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        /* 界面切换 */
-        #login-screen, #result-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .setup-box, .result-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 300px; border: 1px solid rgba(0,0,0,0.05); }
-        
-        /* 状态栏 */
-        .status-bar { background: rgba(255,255,255,0.85); width: 100%; padding: 15px 0; border-bottom: 2px solid rgba(0,0,0,0.05); text-align: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .status-info { display: flex; justify-content: center; gap: 20px; font-weight: 800; font-size: 1.1rem; }
+        /* 顶部状态栏 */
+        .status-bar { background: rgba(255,255,255,0.9); width: 100%; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .status-info { display: flex; justify-content: center; gap: 30px; font-weight: 800; font-size: 1.1rem; }
 
-        /* 游戏板 */
-        #game-board { display: grid; grid-template-columns: repeat(8, 42px); grid-template-rows: repeat(8, 42px); gap: 6px; background: rgba(255,255,255,0.4); padding: 12px; border-radius: 20px; border: 4px solid white; margin-top: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .tile { width: 42px; height: 42px; background: white; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: all 0.1s; box-shadow: 0 3px 0 #ccc; color: #000; user-select: none; }
+        /* 游戏盘 */
+        #game-board { display: grid; grid-template-columns: repeat(8, 42px); gap: 6px; background: rgba(255,255,255,0.4); padding: 12px; border-radius: 20px; border: 4px solid white; margin-top: 20px; }
+        .tile { width: 42px; height: 42px; background: white; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; cursor: pointer; transition: 0.1s; box-shadow: 0 3px 0 #ccc; }
         .tile.active { background: #FFEB3B; transform: scale(1.1); box-shadow: 0 0 15px var(--primary); z-index: 5; border: 2px solid var(--primary); }
-        .tile.matched { transform: scale(0); opacity: 0; pointer-events: none; }
+        .tile.hidden { opacity: 0; pointer-events: none; transform: scale(0); }
 
-        /* 简单模式提示 */
-        .easy-mode .tile.is-unit { color: var(--primary); font-weight: bold; }
+        /* 智能弹窗 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; border-radius: 35px; text-align: center; width: 85%; max-width: 380px; border: 6px solid var(--primary); }
+        .zh-text { font-size: 4.5rem; margin: 0; font-weight: 900; }
+        .py-text { color: var(--pink); font-size: 1.6rem; font-weight: 700; margin: 10px 0; }
+        .def-box { background: #F2F2F7; padding: 15px; border-radius: 18px; text-align: left; font-size: 1rem; line-height: 1.4; margin: 15px 0; }
+        .bonus-label { color: var(--info); font-weight: 800; display: block; margin-bottom: 5px; font-size: 0.9rem; }
 
-        /* 弹窗设计 */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(5px); }
-        .modal-content { background: white; padding: 35px 25px; border-radius: 40px; text-align: center; width: 85%; max-width: 350px; border: 6px solid var(--primary); transform: scale(0.9); transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .modal.active .modal-content { transform: scale(1); }
-        
-        .zh-text { font-size: 4.5rem; margin: 0; font-weight: 900; color: #000; letter-spacing: -2px; }
-        .py-text { color: var(--pink); font-size: 1.6rem; font-weight: 700; margin: 5px 0 15px; }
-        .en-text { background: #F2F2F7; padding: 18px; border-radius: 20px; text-align: left; font-size: 1.1rem; line-height: 1.5; margin: 15px 0; color: #333; }
-
-        /* 按钮动效 */
-        button { padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 800; cursor: pointer; font-size: 1.2rem; width: 100%; box-shadow: 0 6px 0px #D1457A; transition: 0.1s; outline: none; }
+        button { padding: 18px; border-radius: 20px; border: none; background: var(--primary); color: white; font-weight: 800; width: 100%; box-shadow: 0 6px 0px #D1457A; font-size: 1.1rem; }
         button:active { transform: translateY(4px); box-shadow: 0 2px 0px #D1457A; }
-        
-        input, select { padding: 12px; border: 2px solid #eee; border-radius: 12px; width: 100%; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; }
-        .score-big { font-size: 4.5rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="setup-box">
-            <h1 style="margin:0 0 25px 0; font-size: 1.8rem;">📚 华文闯关挑战</h1>
-            <input type="text" id="player-name" placeholder="输入你的名字" maxlength="10">
-            <select id="level-select">
-                <option value="hard">进阶版 (全黑/5分/满分100)</option>
-                <option value="easy">简单版 (橙色提示/3分/满分60)</option>
-            </select>
-            <button onclick="startGame()">开始闯关</button>
-            <p id="today-date" style="margin-top:25px; color:#8E8E93; font-size:0.9rem"></p>
+    <div class="status-bar">
+        <div class="status-info">
+            <span>🏆 分数: <span id="score">0</span></span>
+            <span>⏰ 时间: <span id="timer">05:00</span></span>
         </div>
     </div>
 
-    <div id="game-container" style="display:none">
-        <div class="status-bar">
-            <div class="status-info">
-                <span>👤 <span id="p-name">--</span></span>
-                <span>⏰ <span id="timer">05:00</span></span>
-                <span>🏆 <span id="score">0</span></span>
-            </div>
-        </div>
-        <div id="game-board"></div>
-    </div>
-
-    <div id="result-screen" style="display:none">
-        <div class="result-card">
-            <h2 id="res-date" style="margin:0; color:#8E8E93; font-size:0.9rem"></h2>
-            <h3 id="res-name" style="margin:15px 0; font-size:1.5rem">闯关结束</h3>
-            <div class="score-big" id="res-score">0分</div>
-            <div id="res-msg" style="font-size:1.1rem; line-height:1.6; margin-bottom:25px; color:#444"></div>
-            <button onclick="location.reload()" style="background: #333; box-shadow: 0 6px 0px #000;">重新开始</button>
-        </div>
-    </div>
+    <div id="game-board"></div>
 
     <div id="study-modal" class="modal">
         <div class="modal-content" id="m-frame">
             <h2 class="zh-text" id="m-word">--</h2>
             <p class="py-text" id="m-pinyin">--</p>
-            <div class="en-text" id="m-cn">--</div>
-            <button id="m-btn" onclick="closeModal()">记住了</button>
+            <div class="def-box">
+                <span id="m-label" class="bonus-label" style="display:none">✨ 发现课外词汇</span>
+                <div id="m-def">--</div>
+            </div>
+            <button onclick="closeModal()">记住了</button>
         </div>
     </div>
 
 <script>
-// --- 关卡词库 (更新版：包含拼音与英文) ---
-    const wordBankEntries = {
-        "淘气": { p: "táo qì", e: "Naughty; mischievous." },
-        "直率": { p: "zhí shuài", e: "Frank; straightforward." },
-        "性格": { p: "xìng gé", e: "Character; personality." },
-        "得罪": { p: "dé zuì", e: "To offend; to displease." },
-        "别扭": { p: "biè niu", e: "Awkward; difficult (personality)." },
-        "争辩": { p: "zhēng biàn", e: "To argue; to debate." },
-        "瞬间": { p: "shùn jiān", e: "Instant; in a flash." },
-        "兴致勃勃": { p: "xìng zhì bó bó", e: "In high spirits; full of zest." },
-        "狼狈": { p: "láng bèi", e: "Embarrassed; in a difficult position." },
-        "讥讽": { p: "jī fěng", e: "To ridicule; to satirize." },
-        "赌气": { p: "dǔ qì", e: "To do something in a huff; out of spite." },
-        "小心翼翼": { p: "xiǎo xīn yì yì", e: "Very carefully; gingerly." },
-        "手足无措": { p: "shǒu zú wú cuò", e: "At a loss what to do; bewildered." },
-        "冤枉": { p: "yuān wang", e: "To wrong someone; treated unjustly." },
-        "推荐": { p: "tuī jiàn", e: "To recommend." },
-        "捣乱": { p: "dǎo luàn", e: "To cause trouble; to create a disturbance." },
-        "人缘": { p: "rén yuán", e: "Relations with people; popularity." },
-        "口头禅": { p: "kǒu tóu chán", e: "Pet phrase; mantra." },
-        "抵挡": { p: "dǐ dǎng", e: "To resist; to withstand." },
-        "拉扯": { p: "lā chě", e: "To pull and push; to drag." }
+    // 1. 单元必会词 (消消乐的正确答案)
+    const unitVocab = {
+        "淘气": { p: "táo qì", d: "顽皮；爱捣蛋。", e: "Naughty" },
+        "直率": { p: "zhí shuài", d: "坦率；直爽。", e: "Frank" },
+        "性格": { p: "xìng gé", d: "人对现实的态度和心理特征。", e: "Character" },
+        "得罪": { p: "dé zuì", d: "触犯；使不愉快。", e: "To offend" },
+        "别扭": { p: "biè niu", d: "不顺心；拘束。", e: "Awkward" },
+        "争辩": { p: "zhēng biàn", d: "争论辩驳。", e: "To argue" },
+        "瞬间": { p: "shùn jiān", d: "极短的时间。", e: "In a flash" },
+        "兴致勃勃": { p: "xìng zhì bó bó", d: "兴趣非常浓厚。", e: "Full of zest" },
+        "狼狈": { p: "láng bèi", d: "形容处境非常尴尬。", e: "Embarrassed" },
+        "讥讽": { p: "jī fěng", d: "嘲笑讽刺。", e: "To ridicule" },
+        "赌气": { p: "dǔ qì", d: "因不满意而负气行动。", e: "In a huff" },
+        "小心翼翼": { p: "xiǎo xīn yì yì", d: "非常小心，不敢疏忽。", e: "Very carefully" },
+        "手足无措": { p: "shǒu zú wú cuò", d: "形容慌乱，不知怎么办。", e: "At a loss" },
+        "冤枉": { p: "yuān wang", d: "受到不公平待遇。", e: "To wrong" },
+        "推荐": { p: "tuī jiàn", d: "介绍合适的人或事物。", e: "To recommend" },
+        "捣乱": { p: "dǎo luàn", d: "无理取闹；进行干扰。", e: "To cause trouble" },
+        "人缘": { p: "rén yuán", d: "指在群众中的声望和关系。", e: "Popularity" },
+        "口头禅": { p: "kǒu tóu chán", d: "习惯语。", e: "Pet phrase" },
+        "抵挡": { p: "dǐ dǎng", d: "挡住；阻挡；抵抗。", e: "To resist" },
+        "拉扯": { p: "lā chě", d: "用力拉住。", e: "To drag" }
     };
 
-    const unitChars = new Set(Object.keys(wordBankEntries).join(''));
-    let mainDictionary = {}; // 存储 Smart Pen 格式的大词典
-    let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
-    let gameMode = 'hard', perScore = 5, isPaused = false;
+    let mainDictionary = {}; 
+    let selectedPath = [], score = 0, boardData = [];
 
-    // 获取日期
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
-    document.getElementById('today-date').innerText = "DATE: " + dateStr;
-
-    // --- 核心：加载 Smart Pen 格式词典 ---
+    // 加载 13万字 dictionary.json
     fetch('dictionary.json')
         .then(r => r.json())
-        .then(data => { mainDictionary = data; console.log("词典索引成功"); })
-        .catch(e => console.error("词典读取失败，请检查文件。"));
+        .then(data => { mainDictionary = data; console.log("大辞典已就绪"); })
+        .catch(e => console.error("辞典加载失败，请检查文件路径或服务器环境", e));
 
-    function startGame() {
-        const name = document.getElementById('player-name').value.trim();
-        if(!name) return alert("请输入大名！");
-        gameMode = document.getElementById('level-select').value;
-        perScore = (gameMode === 'easy') ? 3 : 5;
-        
-        document.getElementById('p-name').innerText = name;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'flex';
-        document.body.className = gameMode === 'easy' ? 'easy-mode' : 'hard-mode';
-        
-        initBoard();
-        timerPtr = setInterval(updateTimer, 1000);
-    }
-
-    // 生成不干扰正确答案的随机字
-    function getSafeFiller() {
-        const pool = "的一是在不了有道个人说们中上他大知地出下子自于以发成而方书常用常见";
-        let c;
-        do { c = pool[Math.floor(Math.random()*pool.length)]; } while(unitChars.has(c));
-        return c;
-    }
-
-    function initBoard() {
+    function initGame() {
         let chars = [];
-        const words = Object.keys(wordBankEntries).sort(() => Math.random() - 0.5);
-        // 将词库中的字打入数组
-        words.forEach(w => w.split('').forEach(c => chars.push({char: c, isUnit: true})));
-        // 补足至 64 格
-        while(chars.length < 64) chars.push({char: getSafeFiller(), isUnit: false});
-        board = chars.sort(() => Math.random() - 0.5);
-        render();
+        // 混入单元词
+        Object.keys(unitVocab).forEach(w => w.split('').forEach(c => chars.push({char: c, isUnit: true})));
+        // 填充随机干扰字
+        const pool = "的一是在不了有道个人说们中上他大知地出下子自于以发成而方书常用常见";
+        while(chars.length < 64) chars.push({char: pool[Math.floor(Math.random()*pool.length)], isUnit: false});
+        boardData = chars.sort(() => Math.random() - 0.5);
+        renderBoard();
     }
 
-    function render() {
-        const container = document.getElementById('game-board');
-        container.innerHTML = '';
-        board.forEach((tile, i) => {
+    function renderBoard() {
+        const grid = document.getElementById('game-board');
+        grid.innerHTML = '';
+        boardData.forEach((tile, i) => {
             const div = document.createElement('div');
-            div.className = `tile ${tile.isUnit?'is-unit':''} ${selectedPath.includes(i)?'active':''}`;
+            div.className = `tile ${tile.char === "" ? 'hidden' : ''} ${selectedPath.includes(i) ? 'active' : ''}`;
             div.innerText = tile.char;
-            div.onclick = () => handleSelect(i);
-            container.appendChild(div);
+            div.onclick = () => handleTileClick(i);
+            grid.appendChild(div);
         });
     }
 
-    // --- 核心逻辑：判定与重置 ---
-    function handleSelect(idx) {
-        // 取消选中
+    function handleTileClick(idx) {
         if (selectedPath.includes(idx)) {
             selectedPath = selectedPath.filter(i => i !== idx);
-            render();
-            return;
+            renderBoard(); return;
         }
-
         selectedPath.push(idx);
-        const currentStr = selectedPath.map(i => board[i].char).join('');
-        
-        // 1. 检查是否完全匹配【关卡词库】
-        if (wordBankEntries[currentStr]) {
-            showModal(currentStr, wordBankEntries[currentStr], "关卡必会词汇", false);
+        const currentStr = selectedPath.map(i => boardData[i].char).join('');
+
+        // 1. 检查是否为【单元必会词】
+        if (unitVocab[currentStr]) {
+            showModal(currentStr, unitVocab[currentStr], false);
             return;
         }
 
-        // 2. 检查是否完全匹配【百科大词典】(Smart Pen 逻辑)
-        const entry = mainDictionary[currentStr];
-        if (entry) {
-            const py = entry.pinyin || entry.pronunciation || "百科词汇";
-            const def = entry.english || entry.definitions || "这是你发现的隐藏词汇，太棒了！";
-            showModal(currentStr, def, py, true);
+        // 2. 检查是否为【大辞典百科词】
+        if (mainDictionary[currentStr]) {
+            const entry = mainDictionary[currentStr];
+            // 适配你的 dictionary.json 字段格式
+            const data = {
+                p: entry.pinyin || entry.pronunciation || "",
+                d: entry.definitions || entry.english || "你知道得真多！"
+            };
+            showModal(currentStr, data, true);
             return;
         }
 
-        // 3. 选错即取消特效逻辑：
-        // 如果目前组成的字符串，既不是单元词的前缀，也不是百科词的前缀，直接清空。
+        // 3. 智能重置逻辑
         if (currentStr.length >= 2) {
-            const isUnitPrefix = Object.keys(wordBankEntries).some(w => w.startsWith(currentStr));
-            const isDictPrefix = Object.keys(mainDictionary).some(k => k.startsWith(currentStr));
+            // 探测当前组合是否还有可能组成更大的词
+            const canBeUnit = Object.keys(unitVocab).some(k => k.startsWith(currentStr));
+            const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(currentStr));
 
-            if (!isUnitPrefix && !isDictPrefix) {
-                // 特效直接取消
-                selectedPath = [];
-                render();
+            if (!canBeUnit && !canBeDict) {
+                selectedPath = []; // 既不是单元词开头，也不是字典词，特效消失
+                setTimeout(renderBoard, 100);
                 return;
             }
         }
 
-        // 4. 防止无限制点击
-        if (currentStr.length >= 5) {
+        // 限制最长选择
+        if (currentStr.length >= 4) {
             selectedPath = [];
-            render();
+            setTimeout(renderBoard, 200);
             return;
         }
-        
-        render();
+        renderBoard();
     }
 
-    function showModal(word, def, py, isBonus) {
-        isPaused = true; // 弹窗时暂停计时
+    function showModal(word, data, isBonus) {
         const frame = document.getElementById('m-frame');
-        const modal = document.getElementById('study-modal');
+        const label = document.getElementById('m-label');
         
+        // 视觉区分：单元词橙色，百科词蓝色
         frame.style.borderColor = isBonus ? "var(--info)" : "var(--primary)";
+        label.style.display = isBonus ? "block" : "none";
+        
         document.getElementById('m-word').innerText = word;
-        document.getElementById('m-pinyin').innerText = py;
-        document.getElementById('m-cn').innerText = def;
-        document.getElementById('m-btn').innerText = isBonus ? "这就是实力！" : "记住了";
+        document.getElementById('m-pinyin').innerText = data.p;
+        document.getElementById('m-def').innerHTML = data.d + (data.e ? `<br><b>English:</b> ${data.e}` : '');
         
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-        
+        document.getElementById('study-modal').style.display = 'flex';
+
         if (!isBonus) {
-            score += perScore;
+            score += 5;
             document.getElementById('score').innerText = score;
-            // 选对了单元词，方块消除
-            selectedPath.forEach(i => board[i] = {char: "", isUnit: false});
+            // 只有单元词消除
+            selectedPath.forEach(i => boardData[i].char = "");
         }
         
-        // 自动读音
+        // 自动发音
         const msg = new SpeechSynthesisUtterance(word);
         msg.lang = 'zh-CN';
         window.speechSynthesis.speak(msg);
     }
 
     function closeModal() {
-        const modal = document.getElementById('study-modal');
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            selectedPath = [];
-            isPaused = false; 
-            render();
-            // 检查分数是否达标
-            const max = (gameMode === 'easy' ? 60 : 100);
-            if (score >= max) endGame();
-        }, 300);
+        document.getElementById('study-modal').style.display = 'none';
+        selectedPath = [];
+        renderBoard();
     }
 
-    function updateTimer() {
-        if (isPaused) return; 
-        timeLeft--;
-        const m = Math.floor(timeLeft/60), s = timeLeft%60;
-        document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
-        if (timeLeft <= 0) endGame();
-    }
-
-    function endGame() {
-        clearInterval(timerPtr);
-        document.getElementById('game-container').style.display = 'none';
-        document.getElementById('result-screen').style.display = 'flex';
-        document.getElementById('res-date').innerText = dateStr;
-        document.getElementById('res-name').innerText = document.getElementById('p-name').innerText;
-        document.getElementById('res-score').innerText = score + "分";
-        
-        const msgBox = document.getElementById('res-msg');
-        const max = (gameMode === 'easy' ? 60 : 100);
-        const ratio = score / max;
-
-        // 鼓励语系统
-        if (ratio >= 1) {
-            msgBox.innerHTML = "🎉 太不可思议了！全对通关！<br>你是当之无愧的华文小状元！🥇👑✨";
-        } else if (ratio >= 0.8) {
-            msgBox.innerHTML = "🌟 优秀！表现非常出色！<br>你的华文功底很扎实哦！👏🔥";
-        } else if (ratio >= 0.5) {
-            msgBox.innerHTML = "👍 及格了！继续努力！<br>多记多练，下次一定会更好！📚💪";
-        } else {
-            msgBox.innerHTML = "😅 还没及格哦，不要气馁！<br>失败是成功之母，再挑战一次吧！🌱📖";
-        }
-    }
+    initGame();
 </script>
 </body>
 </html>
