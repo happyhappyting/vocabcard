@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>华文词语消消乐</title>
+    <title>华文词语消消乐 - 完整稳定版</title>
     <style>
         :root { --primary: #FF9800; --success: #4caf50; --bg-yellow: #FFF9C4; --glass: rgba(255, 255, 255, 0.85); --text-brown: #5D4037; }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-yellow); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; position: relative; }
@@ -11,12 +11,12 @@
         .floating-emoji { position: absolute; font-size: 2rem; opacity: 0.3; animation: float linear infinite; }
         @keyframes float { from { transform: translateY(110vh); } to { transform: translateY(-10vh); } }
         
-        .setup-bar { background: var(--glass); backdrop-filter: blur(12px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin: 15px; display: flex; gap: 10px; z-index: 10; border: 1px solid white; }
+        .setup-bar { background: var(--glass); backdrop-filter: blur(12px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin: 15px; display: flex; gap: 10px; z-index: 10; border: 1px solid white; flex-wrap: wrap; justify-content: center; }
         #timer { font-size: 1.2rem; font-weight: bold; color: #E64A19; height: 1.5rem; margin-bottom: 5px; }
         
-        #game-board { display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(6, 55px); gap: 8px; background: rgba(255, 255, 255, 0.3); padding: 12px; border-radius: 18px; border: 2px solid white; display: none; }
-        .tile { width: 55px; height: 55px; background: white; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: var(--text-brown); cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 #ddd; position: relative; }
-        .tile.filler { background: #fdfdfd; color: #bbb; box-shadow: 0 4px 0 #eee; cursor: default; } /* 干扰字样式 */
+        #game-board { display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(6, 55px); gap: 8px; background: rgba(255, 255, 255, 0.3); padding: 12px; border-radius: 18px; border: 2px solid white; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .tile { width: 55px; height: 55px; background: white; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; color: var(--text-brown); cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 #ddd; position: relative; }
+        .tile.filler { background: #fdfdfd; color: #aaa; box-shadow: 0 4px 0 #eee; font-weight: normal; } /* 干扰字稍微浅色一点 */
         .tile.empty { visibility: hidden; }
         .tile.matched { background: var(--success) !important; color: white; animation: celebrate 0.5s ease; z-index: 5; }
         @keyframes celebrate { 50% { transform: scale(1.1); } }
@@ -25,27 +25,25 @@
         .btn-main { background: var(--primary); color: white; }
         
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 200; }
-        .modal-content { background: white; padding: 25px; border-radius: 24px; text-align: center; width: 280px; }
+        .modal-content { background: white; padding: 25px; border-radius: 24px; text-align: center; width: 280px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .meaning-box { text-align: left; background: #F5F5F5; padding: 15px; border-radius: 15px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div id="emoji-bg"></div>
-    <h1>✨ 华文大闯关</h1>
+    <h1 style="color:var(--text-brown)">✨ 华文大闯关</h1>
     
     <div class="setup-bar">
         <select id="unit-select">
             <option value="unit1">单元一</option>
             <option value="unit2">单元二</option>
-            <option value="unit3">单元三</option>
-            <option value="unit4">单元四</option>
         </select>
         <select id="diff-select">
             <option value="5">初级 (5词)</option>
             <option value="8">中级 (120s)</option>
             <option value="11">高级 (180s)</option>
         </select>
-        <button class="btn-main" onclick="loadUnitScript()">确认开始</button>
+        <button class="btn-main" onclick="initGame()">确认开始</button>
     </div>
 
     <div id="timer"></div>
@@ -53,83 +51,101 @@
 
     <div id="study-modal" class="modal">
         <div class="modal-content">
-            <h2 id="modal-word" style="color:var(--primary); margin:0"></h2>
-            <div id="modal-pinyin" style="color:#888; margin:5px 0 15px"></div>
+            <h2 id="modal-word" style="color:var(--primary); margin:0; font-size: 2.2rem;"></h2>
+            <div id="modal-pinyin" style="color:#888; margin:5px 0 15px; font-size: 1.2rem;"></div>
             <div id="modal-meaning" class="meaning-box"></div>
             <button class="btn-main" style="margin-top:20px; width:100%" onclick="closeModal()">记住了</button>
         </div>
     </div>
 
     <script>
-        // 干扰字库：初一学生熟悉的词汇，用于填满空格
-        const fillers = ["苹果", "学习", "食堂", "课室", "爷", "快乐", "作业", "运动", "老师", "早操", "文具", "零食", "校车"];
-        let fillerChars = fillers.join('').split('');
+        // 1. 词库数据整合
+        const allUnitsData = {
+            unit1: [
+                { word: "淘气", pinyin: "táo qì", meaning: "顽皮；爱捣蛋。", meaning_en: "naughty; mischievous" },
+                { word: "惹", pinyin: "rě", meaning: "招引；引起不快。", meaning_en: "provoke" },
+                { word: "两肋插刀", pinyin: "liǎng lèi chā dāo", meaning: "形容为朋友亲情，不惜牺牲自己。", meaning_en: "sacrifice oneself for friends" },
+                { word: "直率", pinyin: "zhí shuài", meaning: "坦率；直爽。", meaning_en: "candid; frank" },
+                { word: "口头禅", pinyin: "kǒu tóu chán", meaning: "经常挂在嘴边的习惯语。", meaning_en: "catchphrase; mantra" },
+                { word: "人缘", pinyin: "rén yuán", meaning: "指与周围人的关系。", meaning_en: "relations with other people" },
+                { word: "性格", pinyin: "xìng gé", meaning: "人在态度和行为上表现出来的心理特征。", meaning_en: "nature; character" },
+                { word: "得罪", pinyin: "dé zuì", meaning: "触犯；使不愉快。", meaning_en: "to commit an offense" },
+                { word: "别扭", pinyin: "biè niu", meaning: "不顺心；拘束；不自然。", meaning_en: "awkward; uncomfortable" },
+                { word: "争辩", pinyin: "zhēng biàn", meaning: "争论辩驳。", meaning_en: "a dispute; to wrangle" },
+                { word: "冤枉", pinyin: "yuān wang", meaning: "受到不公平待遇。", meaning_en: "to accuse wrongly" },
+                { word: "科技", pinyin: "kē jì", meaning: "科学技术。", meaning_en: "science and technology" },
+                { word: "推荐", pinyin: "tuī jiàn", meaning: "把好的人或事物向人介绍。", meaning_en: "to recommend" },
+                { word: "捣乱", pinyin: "dǎo luàn", meaning: "进行破坏；找麻烦。", meaning_en: "to disturb; look for trouble" }
+            ],
+            unit2: [
+                { word: "瞬间", pinyin: "shùn jiān" , meaning: "极短的时间；一刹那。", meaning_en: "in an instant" },
+                { word: "粘", pinyin: "zhān", meaning: "东西互相附着。", meaning_en: "to glue; to stick to" },
+                { word: "兴致勃勃", pinyin: "xìng zhì bó bó", meaning: "兴趣非常浓厚，情绪高昂。", meaning_en: "in high spirits" },
+                { word: "狼狈", pinyin: "láng bèi", meaning: "形容困苦或受窘的样子。", meaning_en: "in a difficult situation" },
+                { word: "蛋液", pinyin: "dàn yè", meaning: "鸡蛋打破后的液体。", meaning_en: "liquid of the egg" },
+                { word: "讥讽", pinyin: "jī fěng", meaning: "用旁敲侧击的话嘲笑讽刺。", meaning_en: "to satirize; to ridicule" },
+                { word: "赌气", pinyin: "dǔ qì", meaning: "因不满意而任性行动。", meaning_en: "to act in a fit of pique" },
+                { word: "嚷", pinyin: "rǎng", meaning: "大声叫喊。", meaning_en: "to shout; blurt out" },
+                { word: "小心翼翼", pinyin: "xiǎo xīn yì yì", meaning: "非常小心，不敢疏忽。", meaning_en: "very carefully; prudent" },
+                { word: "荧光笔", pinyin: "yíng guāng bǐ", meaning: "作标记用的彩色笔。", meaning_en: "highlighter" },
+                { word: "抵挡", pinyin: "dǐ dǎng", meaning: "挡住；阻挡。", meaning_en: "to resist; to ward off" },
+                { word: "拉扯", pinyin: "lā che", meaning: "用力拉住或拽住。", meaning_en: "to drag; to pull" },
+                { word: "手足无措", pinyin: "shǒu zú wú cuò", meaning: "形容慌乱。", meaning_en: "at a loss" }
+            ]
+        };
+
+        // 干扰字库 (单字填充)
+        const fillerPool = "苹果学习食堂课室爷快乐作业运动老师早操文具零食校车书包窗口桌椅跑步".split('');
 
         let board = [], targetWords = [], timerPtr = null;
         let timeLeft = 0, isPaused = false;
 
         // 装饰 Emoji
         const bg = document.getElementById('emoji-bg');
-        for(let i=0; i<15; i++) {
+        for(let i=0; i<12; i++) {
             let el = document.createElement('div');
-            el.className = 'floating-emoji'; el.innerText = ['📚','✍️','🍎','💡','🎓'][i%5];
-            el.style.left = Math.random()*100+'vw'; el.style.animationDuration = (8+Math.random()*12)+'s';
+            el.className = 'floating-emoji'; el.innerText = ['📚','🍎','🌟','✏️'][i%4];
+            el.style.left = Math.random()*100+'vw'; el.style.animationDuration = (8+Math.random()*10)+'s';
             bg.appendChild(el);
         }
 
-        function loadUnitScript() {
-            const unit = document.getElementById('unit-select').value;
-            const scriptId = 'dynamic-script';
-            if(document.getElementById(scriptId)) document.getElementById(scriptId).remove();
-            
-            window.unitData = null; 
-            const script = document.createElement('script');
-            script.id = scriptId;
-            script.src = `${unit}.js?t=${Date.now()}`;
-            script.onload = () => {
-                if(window.unitData) startGame(window.unitData);
-                else alert("文件内未发现 unitData");
-            };
-            script.onerror = () => alert("请确保 " + unit + ".js 存在");
-            document.head.appendChild(script);
-        }
-
-        function startGame(data) {
+        function initGame() {
+            const unitKey = document.getElementById('unit-select').value;
             const diff = parseInt(document.getElementById('diff-select').value);
-            // 过滤单字：只选取长度 > 1 的词语作为目标
-            const multiCharWords = data.filter(item => item.word.length > 1);
-            targetWords = [...multiCharWords].sort(() => Math.random() - 0.5).slice(0, diff);
+            const rawData = allUnitsData[unitKey];
             
+            // 过滤：游戏目标只选 2 字以上的词语
+            const validTargets = rawData.filter(item => item.word.length >= 2);
+            targetWords = [...validTargets].sort(() => Math.random() - 0.5).slice(0, diff);
+            
+            // 计时逻辑
             clearInterval(timerPtr);
             timeLeft = (diff === 8) ? 120 : (diff === 11 ? 180 : 0);
-            
+            if(timeLeft > 0) {
+                timerPtr = setInterval(() => {
+                    if(!isPaused) {
+                        timeLeft--;
+                        document.getElementById('timer').innerText = `⏰ 倒计时: ${timeLeft}s`;
+                        if(timeLeft <= 0) { clearInterval(timerPtr); alert("时间到！"); location.reload(); }
+                    }
+                }, 1000);
+            } else { document.getElementById('timer').innerText = "💡 模式：轻松练习"; }
+
+            // 填充棋盘
             let chars = [];
-            // 放入目标词语
             targetWords.forEach(v => v.word.split('').forEach(c => chars.push({char:c, wordObj:v, isTarget:true})));
             
-            // 填满剩余的 36 个格子 (6x6)
-            while(chars.length < 35) { // 留 1 个空格给移动逻辑
-                const randomFiller = fillerChars[Math.floor(Math.random() * fillerChars.length)];
-                chars.push({char: randomFiller, isTarget: false});
+            // 填满 6x6 (共 36 格，留 1 个空格)
+            while(chars.length < 35) {
+                const randomF = fillerPool[Math.floor(Math.random()*fillerPool.length)];
+                chars.push({char: randomF, isTarget: false, empty: false});
             }
-            chars.push({char: "", isTarget: false, empty: true}); // 唯一的空格
+            chars.push({char: "", isTarget: false, empty: true}); 
 
             board = chars.sort(() => Math.random() - 0.5);
             document.querySelector('.setup-bar').style.display = 'none';
             document.getElementById('game-board').style.display = 'grid';
             render();
-            startTimer();
-        }
-
-        function startTimer() {
-            if(timeLeft <= 0) { document.getElementById('timer').innerText = "💡 模式：轻松练习"; return; }
-            timerPtr = setInterval(() => {
-                if(!isPaused) {
-                    timeLeft--;
-                    document.getElementById('timer').innerText = `⏰ 倒计时: ${timeLeft}s`;
-                    if(timeLeft <= 0) { clearInterval(timerPtr); alert("时间到！"); location.reload(); }
-                }
-            }, 1000);
         }
 
         function render() {
@@ -158,7 +174,9 @@
         function checkMatches() {
             for (let r = 0; r < 6; r++) {
                 let rowStr = "";
+                // 只有属于 target 的字符才参与拼词判定
                 for (let c = 0; c < 6; c++) rowStr += (board[r*6+c].isTarget ? board[r*6+c].char : " ");
+                
                 targetWords.forEach((v, vIdx) => {
                     const s = rowStr.indexOf(v.word);
                     if (s !== -1) {
@@ -169,9 +187,16 @@
                         setTimeout(() => {
                             document.getElementById('modal-word').innerText = v.word;
                             document.getElementById('modal-pinyin').innerText = v.pinyin;
-                            document.getElementById('modal-meaning').innerHTML = `<div>${v.meaning}</div><div style="color:#999;font-size:0.8em;margin-top:8px">${v.meaning_en}</div>`;
+                            document.getElementById('modal-meaning').innerHTML = `
+                                <div style="font-weight:bold; color:#5D4037;">${v.meaning}</div>
+                                <div style="margin-top:10px; color:#888; font-size:0.85em; font-style:italic; border-top:1px dashed #ddd; padding-top:10px;">
+                                    ${v.meaning_en}
+                                </div>`;
                             document.getElementById('study-modal').style.display = 'flex';
-                            for(let i=0; i<v.word.length; i++) board[r*6+s+i] = {char: fillerChars[Math.floor(Math.random()*fillerChars.length)], isTarget:false};
+                            // 消除后用干扰字补位
+                            for(let i=0; i<v.word.length; i++) {
+                                board[r*6+s+i] = {char: fillerPool[Math.floor(Math.random()*fillerPool.length)], isTarget: false};
+                            }
                         }, 500);
                         targetWords.splice(vIdx, 1);
                     }
@@ -183,7 +208,7 @@
             document.getElementById('study-modal').style.display = 'none';
             isPaused = false;
             render();
-            if(targetWords.length === 0) { clearInterval(timerPtr); setTimeout(() => alert("本单元词语已找齐！"), 300); }
+            if(targetWords.length === 0) { clearInterval(timerPtr); setTimeout(() => alert("太棒了！本单元词语已找齐！"), 300); }
         }
     </script>
 </body>
