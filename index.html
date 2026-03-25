@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中学华文词语挑战</title>
+    <title>华文词语大挑战 - 全屏适配版</title>
     <style>
         :root { 
-            --primary: #FF9800; /* 橙色 - 主按钮/拼音 */
-            --success: #4caf50; /* 绿色 - 消除反馈 */
-            --bg-color: #C7EDCC; /* 豆沙绿 - 整体背景 */
-            --text-color: #333; /* 深灰 - 统一字体颜色 */
-            --wave-color: #2196F3; /* 蓝色 - 波浪线条 */
-            /* 全局统一使用无衬线字体 */
-            --font-family: 'PingFang SC', "Helvetica Neue", Helvetica, Arial, "Microsoft YaHei", sans-serif;
+            --primary: #FF9800; 
+            --success: #4caf50; 
+            --bg-color: #C7EDCC; /* 豆沙绿 */
+            --text-color: #333; 
+            --wave-color: #2196F3; 
+            --font-family: 'PingFang SC', "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
         body { 
@@ -24,158 +23,180 @@
             align-items: center; 
             min-height: 100vh; 
             color: var(--text-color); 
-            overflow-x: hidden; /* 防止波浪溢出 */
+            overflow-x: hidden;
             position: relative;
         }
 
-        /* 🌊 左右两边的蓝色波浪线条装饰 🌊 */
+        /* 🌊 左右两边的蓝色波浪线条 - 始终贴边 🌊 */
         body::before, body::after {
             content: "";
             position: fixed;
             top: 0;
-            width: 50px; /* 波浪厚度 */
+            width: 4vw; /* 宽度随屏幕缩放 */
+            min-width: 30px;
             height: 100%;
             background-repeat: repeat-y;
-            background-size: 50px 100px; /* 控制波浪的疏密 */
-            opacity: 0.6; /* 半透明，不遮挡内容 */
-            z-index: -1; /* 放在内容后面 */
-            pointer-events: none; /* 不响应点击 */
+            background-size: 100% 120px;
+            opacity: 0.5;
+            z-index: -1;
+            pointer-events: none;
         }
-
-        /* 左侧波浪 - 使用 SVG 生成蓝色波浪纹理 */
         body::before {
             left: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M0 0 Q 25 25, 0 50 T 0 100" stroke="%232196F3" stroke-width="2" fill="none"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M0 0 Q 35 25, 0 50 T 0 100" stroke="%232196F3" stroke-width="3" fill="none"/></svg>');
         }
-
-        /* 右侧波浪 */
         body::after {
             right: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M50 0 Q 25 25, 50 50 T 50 100" stroke="%232196F3" stroke-width="2" fill="none"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M50 0 Q 15 25, 50 50 T 50 100" stroke="%232196F3" stroke-width="3" fill="none"/></svg>');
         }
 
-        /* 📱 屏幕自适应核心容器 📱 */
+        /* 💻 全屏自适应主容器 💻 */
         #main-container {
-            width: 100%;
-            max-width: 600px; /* 电脑端限制最大宽度，防止界面过散 */
+            width: 90vw; /* 占据屏幕 90% 宽度 */
+            max-width: 1200px; /* 在超大显示器上限制最大宽度以免太散 */
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom) 20px; /* iOS安全区域适配 */
+            padding: 20px 0;
             box-sizing: border-box;
-            position: relative;
-            z-index: 1; /* 确保内容在波浪前面 */
+            flex-grow: 1;
         }
-
-        h1 { font-weight: 500; font-size: 1.8rem; margin: 20px 0; }
 
         /* 登录与难度选择 */
         #login-screen { position: fixed; inset: 0; background-color: var(--bg-color); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .setup-box { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 85%; max-width: 320px; }
+        .setup-box { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 320px; }
         
-        /* 统一输入框、选择框样式 */
         input, select { 
             font-family: var(--font-family); 
-            padding: 14px; 
-            border: 2px solid #e0e0e0; 
+            padding: 15px; 
+            border: 2px solid #eee; 
             border-radius: 12px; 
             width: 100%; 
-            font-size: 16px; 
-            margin-bottom: 15px; 
-            box-sizing: border-box; 
-            outline: none; 
-            -webkit-appearance: none; /* 移除iOS默认样式 */
+            font-size: 18px; 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+            outline: none;
         }
 
-        /* 状态栏适配 */
-        .header { background: rgba(255,255,255,0.7); width: 100vw; padding: 10px 0; border-bottom: 1px solid #ddd; text-align: center; }
-        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 400px; margin: 0 auto; font-weight: bold; font-size: 14px; color: var(--text-color); }
+        /* 状态栏：iPad/电脑上横向铺开 */
+        .header { 
+            background: rgba(255,255,255,0.6); 
+            width: 100%; 
+            padding: 15px 0; 
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .info-grid { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center;
+            font-weight: bold; 
+            font-size: clamp(16px, 2vw, 24px); /* 字体随屏幕缩放 */
+        }
 
-        /* 🎮 游戏板自适应配置 🎮 */
+        /* 🎮 核心：大屏自适应游戏板 🎮 */
         #game-board { 
             display: grid; 
-            grid-template-columns: repeat(8, 1fr); /* 核心：八列等分自适应 */
-            gap: 5px; 
-            background: rgba(255,255,255,0.4); 
-            padding: 10px; 
-            border-radius: 20px; 
-            border: 3px solid white; 
-            margin-top: 15px; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 1.5vw; /* 间距随屏幕缩放 */
+            background: rgba(255,255,255,0.3); 
+            padding: 2vw; 
+            border-radius: 25px; 
+            border: 5px solid white; 
             width: 100%; 
-            max-width: 400px; /* 电脑端不宜过大 */
-            box-sizing: border-box; 
+            box-sizing: border-box;
+            margin-bottom: 30px;
         }
 
-        /* 核心：确保方块始终是正方形 */
+        /* 正方形方块逻辑 */
         .tile { 
             width: 100%; 
-            position: relative; 
+            aspect-ratio: 1 / 1; /* 现代浏览器支持，确保正方形 */
             background: white; 
-            border-radius: 8px; 
+            border-radius: clamp(8px, 1.5vw, 15px); 
             cursor: pointer; 
-            transition: transform 0.1s; 
-            box-shadow: 0 3px 0 #ccc; 
-            color: black; 
-            font-weight: normal; 
-            user-select: none; /* 防止长按选中文本 */
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0.5vw 0 #bbb; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .tile::after { content: ""; display: block; padding-bottom: 100%; } /* 高度等于宽度 */
-        .tile-content { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; }
+        
+        .tile-content { 
+            font-size: clamp(18px, 3.5vw, 45px); /* 文字根据方块大小智能调整 */
+            color: black;
+            font-weight: 500;
+        }
 
-        /* 难度样式区分 */
-        .easy-mode .tile.target .tile-content { color: var(--primary) !important; font-weight: bold !important; }
-        .hard-mode .tile .tile-content { color: black !important; font-weight: normal !important; }
+        /* 难度样式 */
+        .easy-mode .tile.target .tile-content { color: var(--primary) !important; font-weight: 800 !important; }
+        .hard-mode .tile .tile-content { color: black !important; font-weight: 500 !important; }
 
-        /* 选中/消除状态 */
-        .tile.active { background: #FFEB3B; transform: scale(1.05); box-shadow: 0 0 10px var(--primary); z-index: 5; }
+        .tile:hover { transform: translateY(-3px); }
+        .tile.active { background: #FFEB3B; transform: scale(1.1); box-shadow: 0 0 20px var(--primary); z-index: 5; }
         .tile.matched { transform: scale(0); opacity: 0; }
 
-        /* 弹窗适配 */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 500; padding: 20px; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 300px; position: relative; }
-        .meaning-box { text-align: left; background: #f9f9f9; padding: 12px; border-radius: 15px; margin: 15px 0; font-size: 0.95rem; line-height: 1.5; }
-
-        /* 按钮适配 */
-        button { font-family: var(--font-family); padding: 14px 30px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%; transition: opacity 0.1s; }
-        button:active { opacity: 0.8; }
-        .tts-btn { background: #2196F3; width: 45px; height: 45px; border-radius: 50%; margin-bottom: 10px; font-size: 20px; padding: 0; }
-
-        /* 结算大屏自适应 */
-        #result-screen { position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
-        .result-card { background: var(--bg-color); padding: 30px; border-radius: 25px; border: 4px solid var(--primary); width: 90%; max-width: 350px; }
-        .score-big { font-size: 5rem; font-weight: 900; color: var(--primary); margin: 15px 0; line-height: 1; }
-        .res-msg-box { font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px; }
-
-        /* 媒体查询：针对超小屏幕调整 */
-        @media (max-width: 360px) {
-            .info-grid { font-size: 12px; }
-            .tile-content { font-size: 1rem; }
-            h1 { font-size: 1.5rem; }
+        /* 弹窗适配大屏 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 500; }
+        .modal-content { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 30px; 
+            text-align: center; 
+            width: 90%; 
+            max-width: 500px; 
         }
+        .meaning-box { text-align: left; background: #f7f7f7; padding: 25px; border-radius: 20px; margin: 20px 0; font-size: clamp(16px, 1.5vw, 22px); border-left: 8px solid var(--primary); }
+
+        button { 
+            font-family: var(--font-family); 
+            padding: 18px 40px; 
+            border-radius: 15px; 
+            border: none; 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: clamp(18px, 1.5vw, 22px);
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+
+        /* 结算界面大屏优化 */
+        .result-card { 
+            background: var(--bg-color); 
+            padding: 60px; 
+            border-radius: 40px; 
+            border: 8px solid var(--primary); 
+            width: 80%; 
+            max-width: 600px; 
+        }
+        .score-big { font-size: clamp(80px, 10vw, 150px); font-weight: 900; color: var(--primary); margin: 20px 0; }
     </style>
 </head>
 <body>
 
     <div id="main-container">
-        
         <div id="login-screen">
             <div class="setup-box">
-                <h1 style="margin:0 0 20px 0; font-weight: 500">华文词语挑战</h1>
-                <input type="text" id="player-name" placeholder="请输入学生姓名" maxlength="10">
+                <h1 style="font-size: 28px; margin-bottom: 30px;">🦁 华文词语挑战</h1>
+                <input type="text" id="player-name" placeholder="输入姓名" maxlength="10">
                 <select id="level-select">
                     <option value="hard">进阶版 (全黑/5分)</option>
                     <option value="easy">简单版 (加粗/3分)</option>
                 </select>
                 <button onclick="startGame()">开始挑战</button>
-                <p id="today-date" style="margin-top:20px; color:#666; font-size:13px"></p>
+                <p id="today-date" style="margin-top:20px; color:#666; font-size:16px"></p>
             </div>
         </div>
 
-        <div id="game-container" style="display:none; flex-direction: column; align-items: center;">
+        <div id="game-container" style="display:none; width: 100%;">
             <div class="header">
-                <div id="game-date" style="font-size:12px; color:#888; margin-bottom:5px"></div>
                 <div class="info-grid">
                     <span>👤 <span id="p-name"></span></span>
+                    <span id="game-date" style="font-weight: normal; font-size: 0.8em; opacity: 0.7;"></span>
                     <span>⏰ <span id="timer">05:00</span></span>
                     <span>🏆 <span id="score">0</span></span>
                 </div>
@@ -183,33 +204,31 @@
             <div id="game-board"></div>
         </div>
 
-        <div id="result-screen">
-            <div class="result-card">
-                <h2 id="res-date" style="margin:0; color:#666; font-weight: normal; font-size: 14px"></h2>
-                <h3 id="res-name" style="margin:10px 0; font-size:1.4rem; font-weight: 500"></h3>
+        <div id="result-screen" style="position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;">
+            <div class="result-card" style="text-align: center;">
+                <h2 id="res-date" style="color: #888; font-weight: normal;"></h2>
+                <h3 id="res-name" style="font-size: 32px; margin: 10px 0;"></h3>
                 <div class="score-big" id="res-score">0分</div>
-                <div class="res-msg-box" id="res-msg"></div>
-                <button onclick="location.reload()">重新挑战</button>
+                <div id="res-msg" style="font-size: 24px; margin-bottom: 40px; line-height: 1.5;"></div>
+                <button onclick="location.reload()" style="width: 100%;">回到首页</button>
             </div>
         </div>
 
         <div id="study-modal" class="modal">
             <div class="modal-content">
-                <button class="tts-btn" onclick="speakWord()">🔊</button>
-                <h2 id="m-word" style="font-size: 2.5rem; margin:5px 0; font-weight: 500"></h2>
-                <p id="m-pinyin" style="color:var(--primary); font-size: 1.2rem; margin: 0;"></p>
+                <button onclick="speakWord()" style="background:#2196F3; border-radius:50%; width:60px; height:60px; padding:0; margin-bottom:15px; font-size:30px">🔊</button>
+                <h2 id="m-word" style="font-size: 4rem; margin:10px 0;"></h2>
+                <p id="m-pinyin" style="color:var(--primary); font-size: 1.8rem; margin:0"></p>
                 <div class="meaning-box">
-                    <div id="m-cn" style="font-weight:bold; color: #000;"></div>
-                    <div id="m-en" style="color:#666; font-size:0.9rem; margin-top:8px;"></div>
+                    <div id="m-cn" style="font-weight:bold; font-size: 1.2em; margin-bottom:10px;"></div>
+                    <div id="m-en" style="color:#666; font-style:italic;"></div>
                 </div>
-                <button onclick="closeModal()">记住了</button>
+                <button onclick="closeModal()" style="width: 100%;">记住了！继续挑战</button>
             </div>
         </div>
-
     </div>
 
     <script>
-        // --- 核心词库保持不变 ---
         const wordBank = [
             { word: "淘气", pinyin: "táo qì", cn: "顽皮；爱捣蛋。", en: "naughty" },
             { word: "直率", pinyin: "zhí shuài", cn: "坦率；直爽。", en: "candid" },
@@ -218,7 +237,7 @@
             { word: "别扭", pinyin: "biè niu", cn: "不顺心；拘束。", en: "awkward" },
             { word: "争辩", pinyin: "zhēng biàn", cn: "争论辩驳。", en: "dispute" },
             { word: "瞬间", pinyin: "shùn jiān", cn: "极短的时间。", en: "instant" },
-            { word: "兴致勃勃", pinyin: "兴致勃勃", cn: "兴趣非常浓厚。", en: "high spirits" },
+            { word: "兴致勃勃", pinyin: "xìng zhì bó bó", cn: "兴趣非常浓厚。", en: "high spirits" },
             { word: "狼狈", pinyin: "láng bèi", cn: "受窘的样子。", en: "difficult situation" },
             { word: "讥讽", pinyin: "jī fěng", cn: "嘲笑讽刺。", en: "ridicule" },
             { word: "赌气", pinyin: "dǔ qì", cn: "因不满意而行动。", en: "act in pique" },
@@ -230,37 +249,33 @@
             { word: "人缘", pinyin: "rén yuán", cn: "与人的关系。", en: "relations" },
             { word: "口头禅", pinyin: "kǒu tóu chán", cn: "习惯语。", en: "catchphrase" },
             { word: "抵挡", pinyin: "dǐ dǎng", cn: "挡住；阻挡。", en: "resist" },
-            { word: "拉扯", pinyin: "拉扯", cn: "用力拉住。", en: "pull" }
+            { word: "拉扯", pinyin: "lā che", cn: "用力拉住。", en: "pull" }
         ];
 
-        const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
+        const fillers = "的一是在了我不有个他这到们中上大为国地来这了啊嗄以成行时用后".split('');
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
         let gameMode = 'hard', perScore = 5;
 
-        // 设置日期
         const today = new Date();
         const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
         document.getElementById('today-date').innerText = "今天是: " + dateStr;
         document.getElementById('game-date').innerText = dateStr;
 
-        // 核心功能：自适应初始化
         function startGame() {
             const name = document.getElementById('player-name').value.trim();
-            if(!name) return alert("请输入学生姓名！");
+            if(!name) return alert("请输入姓名！");
             gameMode = document.getElementById('level-select').value;
             perScore = (gameMode === 'easy') ? 3 : 5;
             
             document.getElementById('p-name').innerText = name;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            // 添加模式类名
-            document.getElementById('game-container').className = gameMode === 'easy' ? 'easy-mode' : 'hard-mode';
+            document.getElementById('game-board').className = gameMode === 'easy' ? 'easy-mode' : 'hard-mode';
             
             initBoard();
             timerPtr = setInterval(updateTimer, 1000);
         }
 
-        // 自适应方块生成逻辑
         function initBoard() {
             let chars = [];
             const targets = [...wordBank].sort(() => Math.random() - 0.5).slice(0, 20);
@@ -274,26 +289,21 @@
             render();
         }
 
-        // 自适应渲染逻辑
         function render() {
             const container = document.getElementById('game-board');
             container.innerHTML = '';
             board.forEach((tile, i) => {
                 const div = document.createElement('div');
                 div.className = `tile ${tile.wordObj ? 'target' : ''} ${selectedPath.includes(i) ? 'active' : ''}`;
-                
-                // 内部容器包裹文本，以便居中
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'tile-content';
-                contentDiv.innerText = tile.char;
-                
-                div.appendChild(contentDiv);
+                const inner = document.createElement('div');
+                inner.className = 'tile-content';
+                inner.innerText = tile.char;
+                div.appendChild(inner);
                 div.onclick = () => handleSelect(i);
                 container.appendChild(div);
             });
         }
 
-        // 消除/弹窗逻辑保持不变
         function handleSelect(idx) {
             const tile = board[idx];
             if (!tile.wordObj) { selectedPath = []; render(); return; }
@@ -328,10 +338,10 @@
             selectedPath = [];
             document.getElementById('study-modal').style.display = 'none';
             render();
-            if (score >= (gameMode === 'easy' ? 60 : 100)) endGame();
+            const maxScore = (gameMode === 'easy' ? 60 : 100);
+            if (score >= maxScore) endGame();
         }
 
-        // 计时与结算逻辑保持不变
         function updateTimer() {
             if (document.getElementById('study-modal').style.display === 'flex') return;
             timeLeft--;
@@ -343,29 +353,20 @@
         function endGame() {
             clearInterval(timerPtr);
             document.getElementById('game-container').style.display = 'none';
-            const resScreen = document.getElementById('result-screen');
-            resScreen.style.display = 'flex';
-            
+            const rs = document.getElementById('result-screen');
+            rs.style.display = 'flex';
             document.getElementById('res-date').innerText = dateStr;
-            document.getElementById('res-name').innerText = "闯关者: " + document.getElementById('p-name').innerText;
+            document.getElementById('res-name').innerText = document.getElementById('p-name').innerText;
             document.getElementById('res-score').innerText = score + "分";
             
-            const msgBox = document.getElementById('res-msg');
-            const max = (gameMode === 'easy' ? 60 : 100);
-            const percent = score / max;
-
-            if (percent >= 1) {
-                msgBox.innerHTML = "🎉 太不可思议了！全对通关！<br>你是华文小状元！🥇👑";
-            } else if (percent >= 0.8) {
-                msgBox.innerHTML = "🌟 优秀！表现出色！<br>你的华文功底很扎实！👏🔥";
-            } else if (percent >= 0.5) {
-                msgBox.innerHTML = "👍 及格了！继续努力！<br>多记多练下一定会更好！💪📚";
-            } else {
-                msgBox.innerHTML = "😅 还没及格哦，不要气馁！<br>再挑战一次！🌱📖";
-            }
+            const msg = document.getElementById('res-msg');
+            const pct = score / (gameMode === 'easy' ? 60 : 100);
+            if(pct >= 1) msg.innerHTML = "🏆 完美无缺！<br>你已经是词语大师了！✨🔥";
+            else if(pct >= 0.8) msg.innerHTML = "🌟 表现优秀！<br>离满分只差一点点啦！👏";
+            else if(pct >= 0.5) msg.innerHTML = "👍 成功及格！<br>继续保持学习的劲头！💪";
+            else msg.innerHTML = "🌱 没关系，再接再厉！<br>多记几个词语就能及格啦！📖";
         }
 
-        // 朗读
         function speak(text) {
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-CN';
