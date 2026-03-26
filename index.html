@@ -3,228 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>华文词语大挑战 - 全屏适配版</title>
+    <title>中学华文词语挑战</title>
     <style>
         :root { 
             --primary: #FF9800; 
             --success: #4caf50; 
-            --bg-color: #C7EDCC; /* 豆沙绿 */
-            --text-color: #333; 
-            --wave-color: #2196F3; 
-            --font-family: 'PingFang SC', "Helvetica Neue", Helvetica, Arial, sans-serif;
+            --bg: #FFF9C4; 
+            --text: #333; 
+            --font-main: 'PingFang SC', "Microsoft YaHei", sans-serif;
         }
 
         body { 
-            font-family: var(--font-family); 
-            background-color: var(--bg-color); 
+            font-family: var(--font-main); 
+            background: var(--bg); 
             margin: 0; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             min-height: 100vh; 
-            color: var(--text-color); 
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* 🌊 左右两边的蓝色波浪线条 - 始终贴边 🌊 */
-        body::before, body::after {
-            content: "";
-            position: fixed;
-            top: 0;
-            width: 4vw; /* 宽度随屏幕缩放 */
-            min-width: 30px;
-            height: 100%;
-            background-repeat: repeat-y;
-            background-size: 100% 120px;
-            opacity: 0.5;
-            z-index: -1;
-            pointer-events: none;
-        }
-        body::before {
-            left: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M0 0 Q 35 25, 0 50 T 0 100" stroke="%232196F3" stroke-width="3" fill="none"/></svg>');
-        }
-        body::after {
-            right: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M50 0 Q 15 25, 50 50 T 50 100" stroke="%232196F3" stroke-width="3" fill="none"/></svg>');
-        }
-
-        /* 💻 全屏自适应主容器 💻 */
-        #main-container {
-            width: 90vw; /* 占据屏幕 90% 宽度 */
-            max-width: 1200px; /* 在超大显示器上限制最大宽度以免太散 */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
+            color: var(--text); 
+            padding: 20px; /* 确保四周永远有间隙 */
             box-sizing: border-box;
-            flex-grow: 1;
         }
 
-        /* 登录与难度选择 */
-        #login-screen { position: fixed; inset: 0; background-color: var(--bg-color); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .setup-box { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 320px; }
-        
-        input, select { 
-            font-family: var(--font-family); 
-            padding: 15px; 
-            border: 2px solid #eee; 
-            border-radius: 12px; 
+        /* 登录界面 */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .setup-box { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 280px; }
+        input, select { padding: 12px; border: 2px solid #eee; border-radius: 12px; width: 100%; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+
+        /* 游戏容器自适应 */
+        #game-container { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
             width: 100%; 
-            font-size: 18px; 
-            margin-bottom: 20px; 
-            box-sizing: border-box;
-            outline: none;
+            max-width: 500px; /* 限制宽度，防止iPad上太撑 */
         }
 
-        /* 状态栏：iPad/电脑上横向铺开 */
-        .header { 
-            background: rgba(255,255,255,0.6); 
+        /* 整合顶栏 */
+        .game-header { 
             width: 100%; 
-            padding: 15px 0; 
-            border-radius: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .info-grid { 
             display: flex; 
-            justify-content: space-around; 
-            align-items: center;
-            font-weight: bold; 
-            font-size: clamp(16px, 2vw, 24px); /* 字体随屏幕缩放 */
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(255,255,255,0.6);
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            box-sizing: border-box;
         }
 
-        /* 🎮 核心：大屏自适应游戏板 🎮 */
+        /* 游戏板：解决错位 */
         #game-board { 
             display: grid; 
             grid-template-columns: repeat(8, 1fr); 
-            gap: 1.5vw; /* 间距随屏幕缩放 */
-            background: rgba(255,255,255,0.3); 
-            padding: 2vw; 
-            border-radius: 25px; 
-            border: 5px solid white; 
-            width: 100%; 
+            grid-template-rows: repeat(8, 1fr); 
+            gap: 4px; 
+            background: rgba(255,255,255,0.4); 
+            padding: 10px; 
+            border-radius: 20px; 
+            border: 4px solid white; 
+            width: 100%;
+            aspect-ratio: 1 / 1; /* 锁定正方形 */
             box-sizing: border-box;
-            margin-bottom: 30px;
         }
 
-        /* 正方形方块逻辑 */
         .tile { 
-            width: 100%; 
-            aspect-ratio: 1 / 1; /* 现代浏览器支持，确保正方形 */
             background: white; 
-            border-radius: clamp(8px, 1.5vw, 15px); 
+            border-radius: 6px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: clamp(14px, 4.5vw, 20px); 
             cursor: pointer; 
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            box-shadow: 0 0.5vw 0 #bbb; 
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            transition: 0.2s; 
+            box-shadow: 0 3px 0 #ccc; 
+            color: black; 
+            font-weight: normal;
+            user-select: none;
         }
         
-        .tile-content { 
-            font-size: clamp(18px, 3.5vw, 45px); /* 文字根据方块大小智能调整 */
-            color: black;
-            font-weight: 500;
-        }
-
         /* 难度样式 */
-        .easy-mode .tile.target .tile-content { color: var(--primary) !important; font-weight: 800 !important; }
-        .hard-mode .tile .tile-content { color: black !important; font-weight: 500 !important; }
+        .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
+        .hard-mode .tile { color: black !important; font-weight: normal !important; }
 
-        .tile:hover { transform: translateY(-3px); }
-        .tile.active { background: #FFEB3B; transform: scale(1.1); box-shadow: 0 0 20px var(--primary); z-index: 5; }
-        .tile.matched { transform: scale(0); opacity: 0; }
+        .tile.active { background: #FFEB3B; transform: scale(1.05); box-shadow: 0 0 10px var(--primary); z-index: 5; }
+        .tile.matched { transform: scale(0); opacity: 0; pointer-events: none; }
 
-        /* 弹窗适配大屏 */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 500; }
-        .modal-content { 
+        /* 新增栏目：我找到了 */
+        .found-section { width: 100%; margin-top: 25px; text-align: left; }
+        .found-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; display: block; }
+        .found-table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 5px; 
+            table-layout: fixed;
+        }
+        .found-table td { 
             background: white; 
-            padding: 40px; 
-            border-radius: 30px; 
+            border-radius: 8px; 
+            padding: 8px 4px; 
             text-align: center; 
-            width: 90%; 
-            max-width: 500px; 
+            border: 1px solid #ddd;
+            height: 50px;
         }
-        .meaning-box { text-align: left; background: #f7f7f7; padding: 25px; border-radius: 20px; margin: 20px 0; font-size: clamp(16px, 1.5vw, 22px); border-left: 8px solid var(--primary); }
+        .found-word { font-weight: bold; display: block; font-size: 15px; }
+        .found-pinyin { font-size: 11px; color: var(--primary); display: block; }
 
-        button { 
-            font-family: var(--font-family); 
-            padding: 18px 40px; 
-            border-radius: 15px; 
-            border: none; 
-            background: var(--primary); 
-            color: white; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-size: clamp(18px, 1.5vw, 22px);
-            transition: transform 0.1s;
-        }
-        button:active { transform: scale(0.95); }
-
-        /* 结算界面大屏优化 */
-        .result-card { 
-            background: var(--bg-color); 
-            padding: 60px; 
-            border-radius: 40px; 
-            border: 8px solid var(--primary); 
-            width: 80%; 
-            max-width: 600px; 
-        }
-        .score-big { font-size: clamp(80px, 10vw, 150px); font-weight: 900; color: var(--primary); margin: 20px 0; }
+        /* 弹窗与结算 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 500; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; }
+        #result-screen { position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .result-card { background: var(--bg); padding: 40px; border-radius: 30px; border: 5px solid var(--primary); width: 85%; max-width: 400px; }
+        .score-big { font-size: 70px; font-weight: 900; color: var(--primary); margin: 15px 0; }
+        
+        button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%; }
+        .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; font-size: 24px; color: white; border:none; }
     </style>
 </head>
 <body>
 
-    <div id="main-container">
-        <div id="login-screen">
-            <div class="setup-box">
-                <h1 style="font-size: 28px; margin-bottom: 30px;">🦁 华文词语挑战</h1>
-                <input type="text" id="player-name" placeholder="输入姓名" maxlength="10">
-                <select id="level-select">
-                    <option value="hard">进阶版 (全黑/5分)</option>
-                    <option value="easy">简单版 (加粗/3分)</option>
-                </select>
-                <button onclick="startGame()">开始挑战</button>
-                <p id="today-date" style="margin-top:20px; color:#666; font-size:16px"></p>
-            </div>
+    <div id="login-screen">
+        <div class="setup-box">
+            <h1 style="margin:0 0 15px 0">📚 华文闯关</h1>
+            <p id="today-date" style="color:#666; font-size:14px; margin-bottom:20px"></p>
+            <input type="text" id="player-name" placeholder="请输入姓名" maxlength="10">
+            <select id="level-select">
+                <option value="hard">进阶版 (全黑/5分/100满)</option>
+                <option value="easy">简单版 (加粗/3分/60满)</option>
+            </select>
+            <button onclick="startGame()">进入挑战</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div class="game-header">
+            <div>👤 <span id="p-name"></span></div>
+            <div id="game-date" style="color:#888; font-size:12px"></div>
+            <div>⏰ <span id="timer">05:00</span></div>
+            <div>🏆 <span id="score">0</span>分</div>
         </div>
 
-        <div id="game-container" style="display:none; width: 100%;">
-            <div class="header">
-                <div class="info-grid">
-                    <span>👤 <span id="p-name"></span></span>
-                    <span id="game-date" style="font-weight: normal; font-size: 0.8em; opacity: 0.7;"></span>
-                    <span>⏰ <span id="timer">05:00</span></span>
-                    <span>🏆 <span id="score">0</span></span>
-                </div>
-            </div>
-            <div id="game-board"></div>
-        </div>
+        <div id="game-board"></div>
 
-        <div id="result-screen" style="position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;">
-            <div class="result-card" style="text-align: center;">
-                <h2 id="res-date" style="color: #888; font-weight: normal;"></h2>
-                <h3 id="res-name" style="font-size: 32px; margin: 10px 0;"></h3>
-                <div class="score-big" id="res-score">0分</div>
-                <div id="res-msg" style="font-size: 24px; margin-bottom: 40px; line-height: 1.5;"></div>
-                <button onclick="location.reload()" style="width: 100%;">回到首页</button>
-            </div>
+        <div class="found-section">
+            <span class="found-title">我找到了！</span>
+            <table class="found-table" id="found-list">
+                </table>
         </div>
+    </div>
 
-        <div id="study-modal" class="modal">
-            <div class="modal-content">
-                <button onclick="speakWord()" style="background:#2196F3; border-radius:50%; width:60px; height:60px; padding:0; margin-bottom:15px; font-size:30px">🔊</button>
-                <h2 id="m-word" style="font-size: 4rem; margin:10px 0;"></h2>
-                <p id="m-pinyin" style="color:var(--primary); font-size: 1.8rem; margin:0"></p>
-                <div class="meaning-box">
-                    <div id="m-cn" style="font-weight:bold; font-size: 1.2em; margin-bottom:10px;"></div>
-                    <div id="m-en" style="color:#666; font-style:italic;"></div>
-                </div>
-                <button onclick="closeModal()" style="width: 100%;">记住了！继续挑战</button>
+    <div id="result-screen">
+        <div class="result-card">
+            <h2 id="res-date" style="margin:0; color:#666; font-size:14px"></h2>
+            <h3 id="res-name" style="margin:10px 0; font-size:22px"></h3>
+            <div class="score-big" id="res-score">0</div>
+            <div id="res-msg" style="font-size:16px; line-height:1.6; margin-bottom:20px"></div>
+            <button onclick="location.reload()">重新挑战</button>
+        </div>
+    </div>
+
+    <div id="study-modal" class="modal">
+        <div class="modal-content">
+            <button class="tts-btn" onclick="speakWord()">🔊</button>
+            <h2 id="m-word" style="font-size: 2.2rem; margin:10px 0"></h2>
+            <p id="m-pinyin" style="color:var(--primary); font-size: 1.1rem;"></p>
+            <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:15px; margin:15px 0">
+                <div id="m-cn" style="font-weight:bold; font-size:14px"></div>
+                <div id="m-en" style="color:#888; font-size:12px; margin-top:5px"></div>
             </div>
+            <button onclick="closeModal()">记住了</button>
         </div>
     </div>
 
@@ -252,9 +202,9 @@
             { word: "拉扯", pinyin: "lā che", cn: "用力拉住。", en: "pull" }
         ];
 
-        const fillers = "的一是在了我不有个他这到们中上大为国地来这了啊嗄以成行时用后".split('');
+        const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
-        let gameMode = 'hard', perScore = 5;
+        let gameMode = 'hard', perScore = 5, foundWords = [];
 
         const today = new Date();
         const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
@@ -295,13 +245,11 @@
             board.forEach((tile, i) => {
                 const div = document.createElement('div');
                 div.className = `tile ${tile.wordObj ? 'target' : ''} ${selectedPath.includes(i) ? 'active' : ''}`;
-                const inner = document.createElement('div');
-                inner.className = 'tile-content';
-                inner.innerText = tile.char;
-                div.appendChild(inner);
+                div.innerText = tile.char;
                 div.onclick = () => handleSelect(i);
                 container.appendChild(div);
             });
+            updateFoundTable();
         }
 
         function handleSelect(idx) {
@@ -320,6 +268,7 @@
             if (selectedPath.length === tile.wordObj.word.length) {
                 score += perScore;
                 document.getElementById('score').innerText = score;
+                foundWords.push(tile.wordObj);
                 speak(tile.wordObj.word);
                 setTimeout(() => showModal(tile.wordObj), 300);
             }
@@ -338,8 +287,31 @@
             selectedPath = [];
             document.getElementById('study-modal').style.display = 'none';
             render();
-            const maxScore = (gameMode === 'easy' ? 60 : 100);
-            if (score >= maxScore) endGame();
+            if (score >= (gameMode === 'easy' ? 60 : 100)) endGame();
+        }
+
+        function updateFoundTable() {
+            const table = document.getElementById('found-list');
+            table.innerHTML = '';
+            
+            // 第一行空行（按要求保留）
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td></td><td></td><td></td>';
+            table.appendChild(emptyRow);
+
+            // 前3个词放在第二行，后续每3个换行
+            for (let i = 0; i < foundWords.length; i += 3) {
+                const tr = document.createElement('tr');
+                for (let j = 0; j < 3; j++) {
+                    const td = document.createElement('td');
+                    if (foundWords[i + j]) {
+                        const w = foundWords[i + j];
+                        td.innerHTML = `<span class="found-word">${w.word}</span><span class="found-pinyin">${w.pinyin}</span>`;
+                    }
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+            }
         }
 
         function updateTimer() {
@@ -353,18 +325,17 @@
         function endGame() {
             clearInterval(timerPtr);
             document.getElementById('game-container').style.display = 'none';
-            const rs = document.getElementById('result-screen');
-            rs.style.display = 'flex';
+            const resScreen = document.getElementById('result-screen');
+            resScreen.style.display = 'flex';
             document.getElementById('res-date').innerText = dateStr;
-            document.getElementById('res-name').innerText = document.getElementById('p-name').innerText;
+            document.getElementById('res-name').innerText = "闯关者: " + document.getElementById('p-name').innerText;
             document.getElementById('res-score').innerText = score + "分";
-            
-            const msg = document.getElementById('res-msg');
+            const msgBox = document.getElementById('res-msg');
             const pct = score / (gameMode === 'easy' ? 60 : 100);
-            if(pct >= 1) msg.innerHTML = "🏆 完美无缺！<br>你已经是词语大师了！✨🔥";
-            else if(pct >= 0.8) msg.innerHTML = "🌟 表现优秀！<br>离满分只差一点点啦！👏";
-            else if(pct >= 0.5) msg.innerHTML = "👍 成功及格！<br>继续保持学习的劲头！💪";
-            else msg.innerHTML = "🌱 没关系，再接再厉！<br>多记几个词语就能及格啦！📖";
+            if (pct >= 1) msgBox.innerHTML = "🎉 太不可思议了！全对通关！<br>你是当之无愧的华文小状元！🥇✨";
+            else if (pct >= 0.8) msgBox.innerHTML = "🌟 优秀！表现出色！加油！👏🔥";
+            else if (pct >= 0.5) msgBox.innerHTML = "👍 及格了！继续努力！💪";
+            else msgBox.innerHTML = "😅 还没及格哦，再挑战一次吧！🌱📖";
         }
 
         function speak(text) {
