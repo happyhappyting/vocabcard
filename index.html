@@ -11,6 +11,7 @@
             --bg-base: #C7EDCC; /* 豆沙绿 */
             --text: #333; 
             --danger: #f44336;
+            --info: #007AFF;
         }
         body { font-family: 'PingFang SC', sans-serif; background: var(--bg-base); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; overflow-x: hidden; }
 
@@ -51,7 +52,7 @@
 
         /* 弹窗样式 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; border: 5px solid var(--primary); }
         button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; width: 100%; }
         .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; margin-bottom: 10px; color: white; border: none; cursor: pointer; }
     </style>
@@ -88,8 +89,9 @@
     </div>
 
     <div id="study-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" id="m-frame">
             <button class="tts-btn" onclick="speakWord()">🔊</button>
+            <div id="bonus-tag" style="display:none; color:var(--info); font-weight:bold; font-size:14px; margin-bottom:5px">✨ 课外知识发现</div>
             <h2 id="m-word" style="font-size: 2.2rem; margin:10px 0"></h2>
             <p id="m-pinyin" style="color:var(--primary); font-size: 1.1rem;"></p>
             <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:15px; margin:15px 0">
@@ -108,7 +110,7 @@
             { word: "得罪", pinyin: "dé zuì", cn: "触犯；使不愉快。", en: "offend" },
             { word: "别扭", pinyin: "biè niu", cn: "不顺心；拘束。", en: "awkward" },
             { word: "争辩", pinyin: "zhēng biàn", cn: "争论辩驳。", en: "dispute" },
-            { word: "瞬间", pinyin: "shùn jiān", cn: "极短的时间。", en: "instant" },
+            { word: "瞬间", pinyin: "shùn jān", cn: "极短的时间。", en: "instant" },
             { word: "兴致勃勃", pinyin: "xìng zhì bó bó", cn: "兴趣非常浓厚。", en: "high spirits" },
             { word: "狼狈", pinyin: "láng bèi", cn: "受窘的样子。", en: "difficult situation" },
             { word: "讥讽", pinyin: "jī fěng", cn: "嘲笑讽刺。", en: "ridicule" },
@@ -127,17 +129,19 @@
         const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
         let gameMode = 'hard', perScore = 5, foundWords = [];
-        let externalDict = [];
+        let mainDictionary = {}; // 对应参考代码的外部大辞典存储
         let isMuted = false;
-        let isProcessing = false; // 防止弹窗时点击
+        let isProcessing = false; 
+        let isBonusWord = false; // 标记当前弹窗是否为课外词
 
-        async function loadDictionary() {
-            try {
-                const response = await fetch('dictionary.json');
-                externalDict = await response.json();
-            } catch (e) { console.log("本地字典加载跳过"); }
-        }
-        loadDictionary();
+        // --- 参考代码中的核心 Fetch 逻辑 ---
+        fetch('dictionary.json')
+            .then(r => r.json())
+            .then(data => { 
+                mainDictionary = data; 
+                console.log("外部字典加载成功");
+            })
+            .catch(e => console.log("大辞典未加载或不存在"));
 
         (function initVisuals() {
             const container = document.getElementById('emoji-container');
@@ -203,38 +207,48 @@
             checkWord();
         }
 
+        // --- 核心判定逻辑（微调自参考代码） ---
         function checkWord() {
-            const currentStr = selectedPath.map(i => board[i].char).join('');
+            const str = selectedPath.map(i => board[i].char).join('');
             
-            // 1. 优先查本地单元词库 (完全匹配)
-            const unitMatch = wordBank.find(w => w.word === currentStr);
+            // 1. 优先判定单元词库 (必须完全匹配)
+            const unitMatch = wordBank.find(v => v.word === str);
             if (unitMatch) {
                 isProcessing = true;
-                score += perScore;
-                document.getElementById('score').innerText = score;
-                foundWords.unshift(unitMatch);
-                speak(unitMatch.word);
-                showModal(unitMatch, true); 
+                isBonusWord = false;
+                showModal(unitMatch);
                 return;
             }
 
-            // 2. 检查前缀逻辑
-            const isPrefix = wordBank.some(w => w.word.startsWith(currentStr) && w.word !== currentStr);
-            
-            if (!isPrefix) {
-                const extMatch = externalDict.find(w => w.word === currentStr);
-                if (extMatch && currentStr.length >= 2) {
+            // 2. 判定外部大辞典 (单字不跳)
+            if (str.length >= 2 && mainDictionary[str]) {
+                // 检查这个词是不是单元词库里某个长词的前半部分
+                const isPrefixOfUnit = wordBank.some(v => v.word.startsWith(str) && v.word !== str);
+                
+                if (!isPrefixOfUnit) {
                     isProcessing = true;
-                    speak(extMatch.word);
-                    showModal(extMatch, false);
-                } else {
-                    // 错选判定：超过4个字，或者虽然没到4个字但既不是前缀也不是字典词
-                    if (selectedPath.length >= 4 || currentStr.length >= 2) {
-                        triggerWrongEffect();
-                    }
+                    isBonusWord = true;
+                    const dictEntry = mainDictionary[str];
+                    showModal({
+                        word: str,
+                        pinyin: dictEntry.pinyin || dictEntry.pronunciation || "",
+                        cn: dictEntry.definitions || dictEntry.explanation || "你知道得很多！",
+                        en: dictEntry.english || ""
+                    });
+                    return;
                 }
-            } else if (selectedPath.length >= 4) {
-                // 即使是前缀，到了4个字还没匹配成功（因为我们词库最长就4个字），也熔断
+            }
+
+            // 3. 熔断与错误逻辑
+            if (str.length >= 2) {
+                const canBeUnit = wordBank.some(v => v.word.startsWith(str));
+                const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(str));
+                if (!canBeUnit && !canBeDict) {
+                    triggerWrongEffect();
+                }
+            }
+            
+            if (str.length >= 4) { 
                 triggerWrongEffect();
             }
         }
@@ -243,7 +257,6 @@
             isProcessing = true;
             const tiles = document.querySelectorAll('.tile.active');
             tiles.forEach(t => t.classList.add('wrong'));
-            
             setTimeout(() => {
                 selectedPath = [];
                 isProcessing = false;
@@ -251,26 +264,43 @@
             }, 400);
         }
 
-        function showModal(v, isMatch) {
+        function showModal(v) {
             document.getElementById('m-word').innerText = v.word;
             document.getElementById('m-pinyin').innerText = v.pinyin;
             document.getElementById('m-cn').innerText = v.cn;
             document.getElementById('m-en').innerText = v.en;
             
+            // 样式区分
+            const frame = document.getElementById('m-frame');
+            const bonusTag = document.getElementById('bonus-tag');
+            frame.style.borderColor = isBonusWord ? "var(--info)" : "var(--primary)";
+            bonusTag.style.display = isBonusWord ? "block" : "none";
+            
+            if (!isBonusWord) {
+                score += perScore;
+                document.getElementById('score').innerText = score;
+                foundWords.unshift(v);
+            }
+
+            const modal = document.getElementById('study-modal');
             const btn = document.getElementById('modal-close-btn');
+
             btn.onclick = () => {
-                if(isMatch) {
+                if(!isBonusWord) {
+                    // 正式词消除：变回背景字填充
                     selectedPath.forEach(idx => {
                         board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null };
                     });
                 }
                 selectedPath = [];
                 isProcessing = false;
-                document.getElementById('study-modal').style.display = 'none';
+                modal.style.display = 'none';
                 render();
                 if (score >= (gameMode === 'easy' ? 60 : 100)) endGame();
             };
-            document.getElementById('study-modal').style.display = 'flex';
+            
+            modal.style.display = 'flex';
+            speak(v.word);
         }
 
         function updateFoundTable() {
@@ -306,7 +336,7 @@
 
         function speak(text) {
             if (isMuted) return;
-            window.speechSynthesis.cancel(); // 停止当前播放，立即播放新的
+            window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-CN';
             window.speechSynthesis.speak(msg);
