@@ -10,6 +10,7 @@
             --success: #4caf50; 
             --bg-base: #C7EDCC; /* 豆沙绿 */
             --text: #333; 
+            --danger: #f44336;
         }
         body { font-family: 'PingFang SC', sans-serif; background: var(--bg-base); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; overflow-x: hidden; }
 
@@ -24,14 +25,22 @@
         input, select { padding: 12px; border: 2px solid #eee; border-radius: 12px; width: 100%; margin-bottom: 15px; outline: none; }
 
         #game-container { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; }
-        .game-header { width: 100%; display: flex; justify-content: space-between; background: rgba(255,255,255,0.7); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; border: 1px solid white; box-sizing: border-box; }
+        .game-header { width: 100%; display: grid; grid-template-columns: 1.5fr 1fr 1fr 0.5fr; align-items: center; background: rgba(255,255,255,0.7); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; border: 1px solid white; box-sizing: border-box; }
 
-        #game-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 20px; border: 4px solid white; width: 100%; aspect-ratio: 1/1; box-sizing: border-box; }
-        .tile { background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: clamp(14px, 4.5vw, 20px); cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; }
+        #game-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 20px; border: 4px solid white; width: 100%; aspect-ratio: 1/1; box-sizing: border-box; position: relative; }
+        .tile { background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: clamp(14px, 4.5vw, 20px); cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; user-select: none; }
         
         .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
         .hard-mode .tile { color: black !important; font-weight: normal !important; }
+        
+        /* 状态样式 */
         .tile.active { background: #FFEB3B; transform: scale(1.05); box-shadow: 0 0 10px var(--primary); z-index: 5; }
+        .tile.wrong { background: var(--danger) !important; color: white !important; animation: shake 0.3s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+        /* 顶部静音按钮 */
+        .mute-toggle { cursor: pointer; font-size: 20px; text-align: right; transition: transform 0.2s; }
+        .mute-toggle:active { transform: scale(1.2); }
 
         /* 我找到了！栏目 */
         .found-section { width: 100%; margin-top: 25px; }
@@ -66,9 +75,10 @@
 
     <div id="game-container">
         <div class="game-header">
-            <div>👤 <span id="p-name"></span></div>
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">👤 <span id="p-name"></span></div>
             <div>⏰ <span id="timer">05:00</span></div>
             <div>🏆 <span id="score">0</span>分</div>
+            <div class="mute-toggle" id="mute-btn" onclick="toggleMute()">🔊</div>
         </div>
         <div id="game-board"></div>
         <div class="found-section">
@@ -118,13 +128,14 @@
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
         let gameMode = 'hard', perScore = 5, foundWords = [];
         let externalDict = [];
+        let isMuted = false;
+        let isProcessing = false; // 防止弹窗时点击
 
-        // --- 加载本地 dictionary.json ---
         async function loadDictionary() {
             try {
                 const response = await fetch('dictionary.json');
                 externalDict = await response.json();
-            } catch (e) { console.log("本地字典加载跳过或未找到"); }
+            } catch (e) { console.log("本地字典加载跳过"); }
         }
         loadDictionary();
 
@@ -141,6 +152,12 @@
             }
             document.getElementById('today-date').innerText = "今天是: " + new Date().toLocaleDateString();
         })();
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+            if (isMuted) window.speechSynthesis.cancel();
+        }
 
         function startGame() {
             const name = document.getElementById('player-name').value.trim();
@@ -180,8 +197,7 @@
         }
 
         function handleSelect(idx) {
-            // 简单的路径连选
-            if (selectedPath.includes(idx)) return; 
+            if (isProcessing || selectedPath.includes(idx)) return; 
             selectedPath.push(idx);
             render();
             checkWord();
@@ -190,13 +206,10 @@
         function checkWord() {
             const currentStr = selectedPath.map(i => board[i].char).join('');
             
-            // 【修正逻辑】：检查是否是单元长词的前缀
-            // 如果输入“小心”，而词库有“小心翼翼”，isPrefix 为 true
-            const isPrefix = wordBank.some(w => w.word.startsWith(currentStr) && w.word !== currentStr);
-
             // 1. 优先查本地单元词库 (完全匹配)
             const unitMatch = wordBank.find(w => w.word === currentStr);
             if (unitMatch) {
+                isProcessing = true;
                 score += perScore;
                 document.getElementById('score').innerText = score;
                 foundWords.unshift(unitMatch);
@@ -205,18 +218,37 @@
                 return;
             }
 
-            // 2. 外部字典判定 (只有当不是任何长词前缀时，才触发外部词典)
+            // 2. 检查前缀逻辑
+            const isPrefix = wordBank.some(w => w.word.startsWith(currentStr) && w.word !== currentStr);
+            
             if (!isPrefix) {
                 const extMatch = externalDict.find(w => w.word === currentStr);
                 if (extMatch && currentStr.length >= 2) {
+                    isProcessing = true;
                     speak(extMatch.word);
                     showModal(extMatch, false);
-                } else if (currentStr.length >= 4) {
-                    // 如果已经点到4个字还没匹配，重置路径防止误触
-                    selectedPath = [];
-                    setTimeout(render, 200);
+                } else {
+                    // 错选判定：超过4个字，或者虽然没到4个字但既不是前缀也不是字典词
+                    if (selectedPath.length >= 4 || currentStr.length >= 2) {
+                        triggerWrongEffect();
+                    }
                 }
+            } else if (selectedPath.length >= 4) {
+                // 即使是前缀，到了4个字还没匹配成功（因为我们词库最长就4个字），也熔断
+                triggerWrongEffect();
             }
+        }
+
+        function triggerWrongEffect() {
+            isProcessing = true;
+            const tiles = document.querySelectorAll('.tile.active');
+            tiles.forEach(t => t.classList.add('wrong'));
+            
+            setTimeout(() => {
+                selectedPath = [];
+                isProcessing = false;
+                render();
+            }, 400);
         }
 
         function showModal(v, isMatch) {
@@ -228,12 +260,12 @@
             const btn = document.getElementById('modal-close-btn');
             btn.onclick = () => {
                 if(isMatch) {
-                    // 消除单元词，替换为普通填充字
                     selectedPath.forEach(idx => {
                         board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null };
                     });
                 }
                 selectedPath = [];
+                isProcessing = false;
                 document.getElementById('study-modal').style.display = 'none';
                 render();
                 if (score >= (gameMode === 'easy' ? 60 : 100)) endGame();
@@ -273,6 +305,8 @@
         }
 
         function speak(text) {
+            if (isMuted) return;
+            window.speechSynthesis.cancel(); // 停止当前播放，立即播放新的
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'zh-CN';
             window.speechSynthesis.speak(msg);
