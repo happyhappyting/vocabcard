@@ -97,8 +97,9 @@
             transition: all 0.5s ease;
         }
 
-        /* 高难度红色光晕渐变 */
+        /* 高难度红色光晕渐变 + 内部填充淡红色 */
         .extreme-mode {
+            background: #fff5f5 !important;
             border: 3px solid #ff5252 !important;
             animation: redGlow 2s infinite alternate;
         }
@@ -113,11 +114,13 @@
             font-size: clamp(16px, 5vw, 22px); cursor: pointer; 
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             box-shadow: 0 4px 0 #d1d1d1; user-select: none; font-weight: 500;
+            color: #1a1a1a; /* 高级黑字体 */
         }
         .tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #d1d1d1; }
 
         .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
-        .hard-mode .tile, .extreme-mode .tile { color: #333; }
+        /* 强制保持高级黑 */
+        .hard-mode .tile, .extreme-mode .tile { color: #1a1a1a; }
         
         .tile.empty { visibility: hidden; opacity: 0; transform: scale(0.5); }
         .tile.active { 
@@ -131,24 +134,27 @@
         /* 📋 底部记录列表 */
         .found-section { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; box-sizing: border-box; }
         
-        /* “我学会了” 样式 */
+        /* “我学会了” 卡通感框框样式 */
         .learned-title {
             display: inline-block;
-            font-family: "STSong", "SimSun", "Songti SC", serif;
-            font-weight: bold;
-            font-size: 18px;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-weight: 900;
+            font-size: 16px;
             color: #2e7d32;
-            padding: 4px 12px;
-            border: 2px solid #2e7d32;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            padding: 6px 18px;
+            background-color: #e8f5e9;
+            border: 3px solid #2e7d32;
+            border-radius: 50px; /* 胶囊圆角 */
+            box-shadow: 0 4px 0 #2e7d32; /* 卡通厚度感 */
+            margin-bottom: 15px;
+            position: relative;
         }
 
         .found-table { 
             width: 100%; 
             border-collapse: separate; 
             border-spacing: 8px; 
-            table-layout: fixed; /* 核心：确保长宽一致 */
+            table-layout: fixed; 
         }
         .found-table td { 
             background: #f0f4f7; 
@@ -156,10 +162,10 @@
             padding: 12px 2px; 
             text-align: center; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-            height: 50px; /* 固定高度 */
+            height: 50px; 
             overflow: hidden;
         }
-        .found-word { font-weight: bold; font-size: 15px; color: #333; display: block; }
+        .found-word { font-weight: bold; font-size: 15px; color: #1a1a1a; display: block; }
         .found-pinyin { font-size: 10px; color: var(--primary); font-family: Arial; display: block; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
@@ -235,7 +241,7 @@
         <div id="game-board"></div>
 
         <div class="found-section">
-            <div class="learned-title">✅ 我学会了</div>
+            <div class="learned-title">我学会了</div>
             <table class="found-table" id="found-list"></table>
         </div>
     </div>
@@ -244,10 +250,10 @@
         <div class="modal-content" id="m-frame">
             <button class="tts-btn" onclick="speakWord()">🔊</button>
             <div id="bonus-tag" style="display:none; color:var(--info); font-weight:bold; font-size:14px; margin-bottom:5px">✨ 课外词汇发现</div>
-            <h2 id="m-word" style="font-size: 2.8rem; margin:10px 0; color: #333;"></h2>
+            <h2 id="m-word" style="font-size: 2.8rem; margin:10px 0; color: #1a1a1a;"></h2>
             <p id="m-pinyin" style="color:var(--primary); font-size: 1.2rem; font-weight: bold;"></p>
             <div style="text-align:left; background:#f5f5f5; padding:18px; border-radius:20px; margin:20px 0; border: 1px solid #eee;">
-                <div id="m-cn" style="font-weight:bold; line-height: 1.4;"></div>
+                <div id="m-cn" style="font-weight:bold; line-height: 1.4; color:#1a1a1a;"></div>
                 <div id="m-en" style="color:#888; font-size:13px; margin-top:8px; border-top: 1px dashed #ddd; pt: 8px;"></div>
             </div>
             <button id="modal-close-btn">记住了</button>
