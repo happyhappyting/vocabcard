@@ -17,7 +17,7 @@
 
         /* 🌸 背景飘落 Emoji 🌸 */
         .emoji-bg { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
-        .falling-emoji { position: absolute; opacity: 0.2; animation: fall linear infinite; }
+        .falling-emoji { position: absolute; opacity: 0.6; animation: fall linear infinite; }
         @keyframes fall { 0% { transform: translateY(-50px); } 100% { transform: translateY(105vh); } }
 
         /* 登录与游戏板布局 */
@@ -29,34 +29,34 @@
         .game-header { width: 100%; display: grid; grid-template-columns: 1.5fr 1fr 1fr 0.5fr; align-items: center; background: rgba(255,255,255,0.7); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; border: 1px solid white; box-sizing: border-box; }
 
         #game-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 20px; border: 4px solid white; width: 100%; aspect-ratio: 1/1; box-sizing: border-box; position: relative; }
-        .tile { background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: clamp(14px, 4.5vw, 20px); cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; user-select: none; }
+        .tile { background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: clamp(14px, 4.5vw, 20px); cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; user-select: none; min-height: 0; }
         
+        /* 模式区分 */
         .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
         .hard-mode .tile { color: black !important; font-weight: normal !important; }
+        .extreme-mode .tile { color: black !important; font-weight: normal !important; }
         
-        /* 状态样式 */
+        /* 消消乐空白样式 */
+        .tile.empty { visibility: hidden; pointer-events: none; }
+
         .tile.active { background: #FFEB3B; transform: scale(1.05); box-shadow: 0 0 10px var(--primary); z-index: 5; }
         .tile.wrong { background: var(--danger) !important; color: white !important; animation: shake 0.3s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
-        /* 顶部静音按钮 */
         .mute-toggle { cursor: pointer; font-size: 20px; text-align: right; transition: transform 0.2s; }
         .mute-toggle:active { transform: scale(1.2); }
 
-        /* 我找到了！栏目 */
         .found-section { width: 100%; margin-top: 25px; }
         .found-table { width: 100%; border-collapse: separate; border-spacing: 5px; table-layout: fixed; }
         .found-table td { background: white; border-radius: 8px; padding: 8px 4px; text-align: center; height: 50px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
         .found-word { font-weight: bold; display: block; font-size: 15px; }
         .found-pinyin { font-size: 11px; color: var(--primary); display: block; }
 
-        /* 弹窗样式 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; border: 5px solid var(--primary); }
         button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; width: 100%; }
         .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; margin-bottom: 10px; color: white; border: none; cursor: pointer; }
 
-        /* ✨ 新增：漂亮结算界面样式 ✨ */
         #result-screen { display: none; }
         .result-box { background: white; padding: 35px; border-radius: 30px; text-align: center; width: 300px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
         .result-title { font-size: 24px; margin-bottom: 20px; color: var(--text); }
@@ -76,8 +76,9 @@
             <p id="today-date" style="color:#666; font-size:14px"></p>
             <input type="text" id="player-name" placeholder="请输入姓名">
             <select id="level-select">
-                <option value="hard">进阶版 (全黑/5分/100满)</option>
-                <option value="easy">简单版 (加粗/3分/60满)</option>
+                <option value="extreme">高难度版 (全黑/不消除/100满)</option>
+                <option value="hard">进阶版 (全黑/消消乐/80满)</option>
+                <option value="easy">简单版 (加粗/消消乐/60满)</option>
             </select>
             <button onclick="startGame()">进入挑战</button>
         </div>
@@ -149,7 +150,7 @@
 
         const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
-        let gameMode = 'hard', perScore = 5, foundWords = [];
+        let gameMode = 'extreme', perScore = 5, foundWords = [];
         let mainDictionary = {}; 
         let isMuted = false;
         let isProcessing = false; 
@@ -159,9 +160,8 @@
             .then(r => r.json())
             .then(data => { 
                 mainDictionary = data; 
-                console.log("外部字典加载成功");
             })
-            .catch(e => console.log("大辞典未加载或不存在"));
+            .catch(e => console.log("大辞典未加载"));
 
         (function initVisuals() {
             const container = document.getElementById('emoji-container');
@@ -191,7 +191,12 @@
             document.getElementById('p-name').innerText = name;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            document.getElementById('game-board').className = gameMode === 'easy' ? 'easy-mode' : 'hard-mode';
+            
+            let boardClass = 'extreme-mode';
+            if(gameMode === 'easy') boardClass = 'easy-mode';
+            if(gameMode === 'hard') boardClass = 'hard-mode';
+            document.getElementById('game-board').className = boardClass;
+
             initBoard();
             timerPtr = setInterval(updateTimer, 1000);
         }
@@ -200,9 +205,9 @@
             let chars = [];
             const targets = [...wordBank].sort(() => 0.5 - Math.random()).slice(0, 20);
             targets.forEach(v => {
-                v.word.split('').forEach((c, idx) => chars.push({ char: c, wordObj: v, charIdx: idx }));
+                v.word.split('').forEach((c, idx) => chars.push({ char: c, wordObj: v, charIdx: idx, empty: false }));
             });
-            while(chars.length < 64) chars.push({ char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null });
+            while(chars.length < 64) chars.push({ char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null, empty: false });
             board = chars.sort(() => 0.5 - Math.random());
             render();
         }
@@ -212,8 +217,8 @@
             container.innerHTML = '';
             board.forEach((tile, i) => {
                 const div = document.createElement('div');
-                div.className = `tile ${tile.wordObj ? 'target' : ''} ${selectedPath.includes(i) ? 'active' : ''}`;
-                div.innerText = tile.char;
+                div.className = `tile ${tile.wordObj ? 'target' : ''} ${selectedPath.includes(i) ? 'active' : ''} ${tile.empty ? 'empty' : ''}`;
+                div.innerText = tile.empty ? '' : tile.char;
                 div.onclick = () => handleSelect(i);
                 container.appendChild(div);
             });
@@ -221,7 +226,7 @@
         }
 
         function handleSelect(idx) {
-            if (isProcessing || selectedPath.includes(idx)) return; 
+            if (isProcessing || selectedPath.includes(idx) || board[idx].empty) return; 
             selectedPath.push(idx);
             render();
             checkWord();
@@ -254,13 +259,9 @@
             if (str.length >= 2) {
                 const canBeUnit = wordBank.some(v => v.word.startsWith(str));
                 const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(str));
-                if (!canBeUnit && !canBeDict) {
-                    triggerWrongEffect();
-                }
+                if (!canBeUnit && !canBeDict) triggerWrongEffect();
             }
-            if (str.length >= 4) { 
-                triggerWrongEffect();
-            }
+            if (str.length >= 4) triggerWrongEffect();
         }
 
         function triggerWrongEffect() {
@@ -297,14 +298,21 @@
             btn.onclick = () => {
                 if(!isBonusWord) {
                     selectedPath.forEach(idx => {
-                        board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null };
+                        if(gameMode === 'extreme') {
+                            // 高难度：加字
+                            board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null, empty: false };
+                        } else {
+                            // 简单/进阶：消消乐
+                            board[idx].empty = true;
+                        }
                     });
                 }
                 selectedPath = [];
                 isProcessing = false;
                 modal.style.display = 'none';
                 render();
-                if (score >= (gameMode === 'easy' ? 60 : 100)) endGame();
+                const targetEnd = gameMode === 'easy' ? 60 : (gameMode === 'hard' ? 80 : 100);
+                if (score >= targetEnd) endGame();
             };
             
             modal.style.display = 'flex';
@@ -336,10 +344,9 @@
             if (timeLeft <= 0) endGame();
         }
 
-        // --- ✨ 改良版漂亮结算逻辑 ✨ ---
         function endGame() {
             clearInterval(timerPtr);
-            const maxScore = gameMode === 'easy' ? 60 : 100;
+            const maxScore = gameMode === 'easy' ? 60 : (gameMode === 'hard' ? 80 : 100);
             const ratio = score / maxScore;
             
             let emoji = "💪";
@@ -370,12 +377,12 @@
 
             if (fireworks) {
                 const container = document.getElementById('emoji-container');
-                const fx = ['🎆', '✨', '🎉', '🔥', '✨'];
+                const fx = ['🎆', '✨', '🎉', '🔥'];
                 for (let i = 0; i < 60; i++) {
                     setTimeout(() => {
                         const el = document.createElement('div');
                         el.className = 'falling-emoji';
-                        el.style.opacity = "1";
+                        el.style.opacity = "0.8";
                         el.style.zIndex = "3000";
                         el.innerText = fx[Math.floor(Math.random()*fx.length)];
                         el.style.left = Math.random() * 100 + 'vw';
