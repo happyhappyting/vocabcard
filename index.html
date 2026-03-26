@@ -9,7 +9,7 @@
             --primary: #FF9800; 
             --primary-light: #FFB74D;
             --success: #4caf50; 
-            --bg-base: #E8F5E9; /* 更清爽的浅绿 */
+            --bg-base: #E8F5E9; 
             --text: #2c3e50; 
             --danger: #ff5252;
             --info: #2196F3;
@@ -30,7 +30,7 @@
             color: var(--text);
         }
 
-        /* ✨ 背景动效升级 */
+        /* ✨ 背景动效 */
         .emoji-bg { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
         .falling-emoji { 
             position: absolute; 
@@ -43,7 +43,7 @@
             100% { transform: translateY(110vh) rotate(360deg); } 
         }
 
-        /* 🚀 登录界面美化 */
+        /* 🚀 登录界面 */
         #login-screen { 
             position: fixed; inset: 0; background: inherit; z-index: 1000; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -69,7 +69,7 @@
         input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(255,152,0,0.2); }
 
         /* 🎮 游戏主体布局 */
-        #game-container { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; gap: 15px; }
+        #game-container { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; gap: 12px; }
         
         .game-header { 
             width: 100%; display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.4fr; 
@@ -78,12 +78,33 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-weight: bold; 
         }
 
-        /* 🟦 游戏方块区域升级 */
+        /* 📊 进度条样式 */
+        .progress-container {
+            width: 100%; height: 10px; background: rgba(0,0,0,0.1); 
+            border-radius: 5px; overflow: hidden; margin-top: -5px;
+        }
+        #progress-bar {
+            width: 0%; height: 100%; background: linear-gradient(to right, var(--primary-light), var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        /* 🟦 游戏方块区域 */
         #game-board { 
             display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; 
             background: rgba(255,255,255,0.3); padding: 12px; border-radius: 24px; 
             border: 2px solid rgba(255,255,255,0.8); width: 100%; aspect-ratio: 1/1; 
             box-sizing: border-box; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.5s ease;
+        }
+
+        /* 高难度红色光晕渐变 */
+        .extreme-mode {
+            border: 3px solid #ff5252 !important;
+            animation: redGlow 2s infinite alternate;
+        }
+        @keyframes redGlow {
+            from { box-shadow: 0 0 5px rgba(255, 82, 82, 0.2), inset 0 2px 10px rgba(0,0,0,0.05); }
+            to { box-shadow: 0 0 20px rgba(255, 82, 82, 0.6), inset 0 0 10px rgba(255, 82, 82, 0.3); }
         }
         
         .tile { 
@@ -95,7 +116,6 @@
         }
         .tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #d1d1d1; }
 
-        /* 模式颜色区分 */
         .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
         .hard-mode .tile, .extreme-mode .tile { color: #333; }
         
@@ -110,15 +130,38 @@
 
         /* 📋 底部记录列表 */
         .found-section { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; box-sizing: border-box; }
-        .found-table { width: 100%; border-collapse: separate; border-spacing: 8px; }
-        .found-table td { 
-            background: #f0f4f7; border-radius: 12px; padding: 10px 5px; 
-            text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+        
+        /* “我学会了” 样式 */
+        .learned-title {
+            display: inline-block;
+            font-family: "STSong", "SimSun", "Songti SC", serif;
+            font-weight: bold;
+            font-size: 18px;
+            color: #2e7d32;
+            padding: 4px 12px;
+            border: 2px solid #2e7d32;
+            border-radius: 8px;
+            margin-bottom: 12px;
         }
-        .found-word { font-weight: bold; font-size: 16px; color: #333; }
-        .found-pinyin { font-size: 11px; color: var(--primary); font-family: Arial; }
 
-        /* 弹出层美化 */
+        .found-table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 8px; 
+            table-layout: fixed; /* 核心：确保长宽一致 */
+        }
+        .found-table td { 
+            background: #f0f4f7; 
+            border-radius: 12px; 
+            padding: 12px 2px; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            height: 50px; /* 固定高度 */
+            overflow: hidden;
+        }
+        .found-word { font-weight: bold; font-size: 15px; color: #333; display: block; }
+        .found-pinyin { font-size: 10px; color: var(--primary); font-family: Arial; display: block; }
+
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { 
             background: white; padding: 25px; border-radius: 35px; text-align: center; 
@@ -140,13 +183,11 @@
             border-radius: 50%; font-size: 28px; margin-bottom: 15px; box-shadow: 0 4px 0 #bbdefb;
         }
 
-        /* 🏁 结算界面 */
         .result-box { 
             background: white; padding: 30px; border-radius: 40px; text-align: center; 
             width: 85%; max-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         .result-score { font-size: 72px; font-weight: 900; color: var(--primary); text-shadow: 2px 2px 0px rgba(0,0,0,0.05); }
-
         .mute-toggle { font-size: 24px; text-align: right; cursor: pointer; filter: grayscale(0.5); }
     </style>
 </head>
@@ -186,13 +227,15 @@
             <div>🏆 <span id="score">0</span></div>
             <div class="mute-toggle" id="mute-btn" onclick="toggleMute()">🔊</div>
         </div>
+        
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
 
         <div id="game-board"></div>
 
         <div class="found-section">
-            <div style="font-weight:bold; margin-bottom: 10px; color: #2e7d32; display: flex; align-items: center;">
-                <span style="font-size: 20px; margin-right: 5px;">✅</span> 已掌握的词语
-            </div>
+            <div class="learned-title">✅ 我学会了</div>
             <table class="found-table" id="found-list"></table>
         </div>
     </div>
@@ -212,7 +255,6 @@
     </div>
 
     <script>
-        // --- 核心逻辑完全保留且复用 ---
         const wordBank = [
             { word: "淘气", pinyin: "táo qì", cn: "顽皮；爱捣蛋。", en: "naughty" },
             { word: "直率", pinyin: "zhí shuài", cn: "坦率；直爽。", en: "candid" },
@@ -244,7 +286,6 @@
         let isProcessing = false; 
         let isBonusWord = false; 
 
-        // 尝试加载外部词典（如无则跳过）
         fetch('dictionary.json').then(r => r.json()).then(data => mainDictionary = data).catch(() => {});
 
         (function initVisuals() {
@@ -308,6 +349,13 @@
                 container.appendChild(div);
             });
             updateFoundTable();
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const targetEnd = gameMode === 'easy' ? 60 : (gameMode === 'hard' ? 80 : 100);
+            const progress = Math.min((score / targetEnd) * 100, 100);
+            document.getElementById('progress-bar').style.width = progress + '%';
         }
 
         function handleSelect(idx) {
@@ -414,7 +462,7 @@
                     const td = document.createElement('td');
                     if (foundWords[i + j]) {
                         const w = foundWords[i + j];
-                        td.innerHTML = `<span class="found-word">${w.word}</span><br><span class="found-pinyin">${w.pinyin}</span>`;
+                        td.innerHTML = `<span class="found-word">${w.word}</span><span class="found-pinyin">${w.pinyin}</span>`;
                     }
                     tr.appendChild(td);
                 }
