@@ -8,95 +8,60 @@
         :root { 
             --primary: #FF9800; 
             --success: #4caf50; 
-            --bg-base: radial-gradient(circle, #E8F5E9 0%, #C7EDCC 100%); /* 升级渐变背景 */
+            --bg-base: #C7EDCC; /* 豆沙绿 */
             --text: #333; 
             --danger: #f44336;
             --info: #007AFF;
-            --glass: rgba(255, 255, 255, 0.7);
         }
-        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg-base); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; overflow-x: hidden; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg-base); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; overflow-x: hidden; }
 
-        /* 🌸 背景飘落 Emoji 升级阴影 🌸 */
+        /* 🌸 背景飘落 Emoji 🌸 */
         .emoji-bg { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
-        .falling-emoji { position: absolute; opacity: 0.6; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1)); animation: fall linear infinite; }
-        @keyframes fall { 0% { transform: translateY(-50px) rotate(0deg); } 100% { transform: translateY(105vh) rotate(360deg); } }
-
-        /* 标题艺术化处理 */
-        h1 { 
-            font-size: 2.5rem;
-            background: linear-gradient(to bottom, #FF9800, #F44336);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(2px 2px 0px white) drop-shadow(4px 4px 10px rgba(0,0,0,0.2));
-            margin-bottom: 20px;
-        }
+        .falling-emoji { position: absolute; opacity: 0.6; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-50px); } 100% { transform: translateY(105vh); } }
 
         /* 登录与游戏板布局 */
         #login-screen { position: fixed; inset: 0; background: var(--bg-base); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .setup-box { background: white; padding: 40px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; width: 300px; border: 1px solid rgba(255,255,255,0.8); }
-        input, select { padding: 14px; border: 2px solid #f0f0f0; border-radius: 16px; width: 100%; margin-bottom: 18px; outline: none; transition: 0.3s; font-size: 16px; box-sizing: border-box; }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255,152,0,0.2); }
+        .setup-box { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 280px; }
+        input, select { padding: 12px; border: 2px solid #eee; border-radius: 12px; width: 100%; margin-bottom: 15px; outline: none; box-sizing: border-box; }
 
         #game-container { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 500px; }
+        .game-header { width: 100%; display: grid; grid-template-columns: 1.5fr 1fr 1fr 0.5fr; align-items: center; background: rgba(255,255,255,0.7); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; border: 1px solid white; box-sizing: border-box; }
+
+        #game-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 20px; border: 4px solid white; width: 100%; aspect-ratio: 1/1; box-sizing: border-box; position: relative; }
+        .tile { background: white; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: clamp(14px, 4.5vw, 20px); cursor: pointer; transition: 0.2s; box-shadow: 0 3px 0 #ccc; user-select: none; min-height: 0; }
         
-        /* 状态栏水晶化 */
-        .game-header { 
-            width: 100%; display: grid; grid-template-columns: 1.5fr 1fr 1fr 0.5fr; gap: 8px; 
-            align-items: center; background: var(--glass); backdrop-filter: blur(10px); 
-            padding: 12px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; 
-            border: 1px solid white; box-sizing: border-box; box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-        }
-        .game-header > div { background: rgba(255,255,255,0.5); padding: 5px 8px; border-radius: 10px; text-align: center; }
-
-        /* 游戏板与字块实体化 */
-        #game-board { 
-            display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; 
-            background: rgba(255,255,255,0.3); padding: 12px; border-radius: 24px; 
-            border: 6px solid white; width: 100%; aspect-ratio: 1/1; box-sizing: border-box; 
-            position: relative; box-shadow: 0 15px 45px rgba(0,0,0,0.1);
-        }
-        /* 高难度流光效果 */
-        .extreme-mode { border-image: linear-gradient(45deg, #FFD700, #FFA500, #B8860B) 1; animation: borderGlow 3s infinite alternate; }
-        @keyframes borderGlow { from { box-shadow: 0 0 5px #FFD700; } to { box-shadow: 0 0 25px #FFD700; } }
-
-        .tile { 
-            background: linear-gradient(145deg, #ffffff, #f0f0f0); border-radius: 10px; 
-            display: flex; justify-content: center; align-items: center; 
-            font-size: clamp(14px, 5vw, 22px); cursor: pointer; transition: transform 0.1s, box-shadow 0.2s, background 0.2s; 
-            box-shadow: 0 4px 0 #d0d0d0, 0 6px 10px rgba(0,0,0,0.1); user-select: none; 
-        }
-        .tile:active { transform: translateY(2px); box-shadow: 0 2px 0 #d0d0d0; }
+        /* 模式区分 */
+        .easy-mode .tile.target { color: var(--primary); font-weight: bold; }
+        .hard-mode .tile, .extreme-mode .tile { color: black !important; font-weight: normal !important; }
         
-        .easy-mode .tile.target { color: var(--primary); font-weight: bold; text-shadow: 0 0 1px rgba(255,152,0,0.3); }
-        .hard-mode .tile, .extreme-mode .tile { color: #222 !important; font-weight: 500 !important; }
-        .tile.empty { visibility: hidden; pointer-events: none; opacity: 0; transform: scale(0.5); transition: 0.3s; }
+        .tile.empty { visibility: hidden; pointer-events: none; }
+        .tile.active { background: #FFEB3B; transform: scale(1.05); box-shadow: 0 0 10px var(--primary); z-index: 5; }
+        .tile.wrong { background: var(--danger) !important; color: white !important; animation: shake 0.3s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
-        .tile.active { background: #FFEB3B; transform: scale(1.08) translateY(-2px); box-shadow: 0 6px 15px rgba(255,152,0,0.4); z-index: 5; border: 2px solid var(--primary); }
-        .tile.wrong { background: var(--danger) !important; color: white !important; animation: shake 0.4s; box-shadow: 0 0 20px rgba(244,67,54,0.5); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 60% { transform: translateX(6px); } }
+        .mute-toggle { cursor: pointer; font-size: 20px; text-align: right; transition: transform 0.2s; }
 
-        .found-section { width: 100%; margin-top: 30px; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 20px; }
-        .found-table td { background: white; border-radius: 12px; padding: 10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: 0.3s; }
-        .found-word { font-size: 16px; letter-spacing: 1px; }
+        .found-section { width: 100%; margin-top: 25px; }
+        .found-table { width: 100%; border-collapse: separate; border-spacing: 5px; table-layout: fixed; }
+        .found-table td { background: white; border-radius: 8px; padding: 8px 4px; text-align: center; height: 50px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .found-word { font-weight: bold; display: block; font-size: 15px; }
+        .found-pinyin { font-size: 11px; color: var(--primary); display: block; }
 
-        /* 模态框入场动画 */
-        .modal { backdrop-filter: blur(8px); transition: 0.3s; }
-        .modal-content { 
-            background: white; padding: 30px; border-radius: 35px; text-align: center; 
-            width: 300px; border: 8px solid var(--primary); box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* 统一弹窗样式 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; border: 5px solid var(--primary); position: relative; }
+        
+        /* 结果报告弹窗 */
+        #result-screen { display: none; } /* 初始隐藏 */
+        .result-box { background: white; padding: 35px; border-radius: 30px; text-align: center; width: 300px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); border: 5px solid var(--success); }
+        .result-title { font-size: 24px; margin-bottom: 20px; color: var(--text); font-weight: bold; }
+        .result-score { font-size: 60px; font-weight: 900; color: var(--primary); margin: 10px 0; }
+        .result-comment { font-size: 18px; font-weight: bold; margin-bottom: 25px; min-height: 50px; line-height: 1.4; }
+        .result-info { font-size: 14px; color: #666; margin-bottom: 5px; }
 
-        button { padding: 14px 30px; border-radius: 18px; border: none; background: var(--primary); color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 6px 0 #E68A00; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #E68A00; }
-        button:active { transform: translateY(4px); box-shadow: 0 2px 0 #E68A00; }
-
-        .result-score { 
-            font-size: 72px; background: linear-gradient(to bottom, #FF9800, #F44336);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 4px 10px rgba(255,152,0,0.3));
-        }
+        button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; }
+        .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; margin-bottom: 10px; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -106,12 +71,12 @@
     <div id="login-screen">
         <div class="setup-box">
             <h1>📚 华文闯关</h1>
-            <p id="today-date" style="color:#888; font-size:14px; margin-bottom: 20px; font-weight: bold;"></p>
-            <input type="text" id="player-name" placeholder="请输入你的姓名">
+            <p id="today-date" style="color:#666; font-size:14px"></p>
+            <input type="text" id="player-name" placeholder="请输入姓名">
             <select id="level-select">
-                <option value="extreme">🔥 高难度版 (不消除/100满)</option>
-                <option value="hard">🌿 进阶版 (全黑/80满)</option>
-                <option value="easy">🌱 简单版 (提示/60满)</option>
+                <option value="extreme">高难度版 (全黑/不消除/100满)</option>
+                <option value="hard">进阶版 (全黑/消消乐/80满)</option>
+                <option value="easy">简单版 (加粗/消消乐/60满)</option>
             </select>
             <button onclick="startGame()">进入挑战</button>
         </div>
@@ -119,12 +84,12 @@
 
     <div id="result-screen" class="modal">
         <div class="result-box">
-            <span class="celebrate-emoji" id="res-emoji">🎉</span>
-            <div class="result-title" style="font-weight: 900; letter-spacing: 2px;">挑战报告</div>
+            <span class="celebrate-emoji" id="res-emoji" style="font-size: 50px; display: block; margin-bottom: 10px;">🎉</span>
+            <div class="result-title">挑战报告</div>
             <div class="result-info" id="res-date"></div>
             <div class="result-info" id="res-name"></div>
             <div class="result-score" id="res-score">0</div>
-            <div class="result-comment" id="res-comment"></div>
+            <div class="result-comment" id="res-comment">继续努力，加油！</div>
             <button onclick="location.reload()">再挑战一次</button>
         </div>
     </div>
@@ -132,16 +97,13 @@
     <div id="game-container">
         <div class="game-header">
             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">👤 <span id="p-name"></span></div>
-            <div>⏰ <span id="timer" style="color:var(--danger)">05:00</span></div>
-            <div>🏆 <span id="score" style="color:var(--primary)">0</span>分</div>
-            <div class="mute-toggle" id="mute-btn" onclick="toggleMute()" style="background: none;">🔊</div>
+            <div>⏰ <span id="timer">05:00</span></div>
+            <div>🏆 <span id="score">0</span>分</div>
+            <div class="mute-toggle" id="mute-btn" onclick="toggleMute()">🔊</div>
         </div>
         <div id="game-board"></div>
         <div class="found-section">
-            <div style="font-weight:bold; margin-bottom: 10px; color: #555; display: flex; align-items: center;">
-                <span style="background: var(--primary); width: 4px; height: 16px; display: inline-block; margin-right: 8px; border-radius: 2px;"></span>
-                我找到了！
-            </div>
+            <span style="font-weight:bold">我找到了！</span>
             <table class="found-table" id="found-list"></table>
         </div>
     </div>
@@ -150,18 +112,18 @@
         <div class="modal-content" id="m-frame">
             <button class="tts-btn" onclick="speakWord()">🔊</button>
             <div id="bonus-tag" style="display:none; color:var(--info); font-weight:bold; font-size:14px; margin-bottom:5px">✨ 课外知识发现</div>
-            <h2 id="m-word" style="font-size: 2.8rem; margin:10px 0; letter-spacing: 4px;"></h2>
-            <p id="m-pinyin" style="color:var(--primary); font-size: 1.3rem; font-weight: bold;"></p>
-            <div style="text-align:left; background:#f0f7f0; padding:20px; border-radius:20px; margin:20px 0; border: 1px dashed var(--success);">
-                <div id="m-cn" style="font-weight:bold; font-size:16px; line-height: 1.5; color: #444;"></div>
-                <div id="m-en" style="color:#999; font-size:13px; margin-top:8px; border-top: 1px solid #eee; padding-top: 8px;"></div>
+            <h2 id="m-word" style="font-size: 2.2rem; margin:10px 0"></h2>
+            <p id="m-pinyin" style="color:var(--primary); font-size: 1.1rem;"></p>
+            <div style="text-align:left; background:#f9f9f9; padding:15px; border-radius:15px; margin:15px 0">
+                <div id="m-cn" style="font-weight:bold; font-size:14px"></div>
+                <div id="m-en" style="color:#888; font-size:12px; margin-top:5px"></div>
             </div>
-            <button id="modal-close-btn" style="width: 100%;">记住了</button>
+            <button id="modal-close-btn">记住了</button>
         </div>
     </div>
 
     <script>
-        // --- 逻辑完全保留 ---
+        // --- 完整逻辑开始 ---
         const wordBank = [
             { word: "淘气", pinyin: "táo qì", cn: "顽皮；爱捣蛋。", en: "naughty" },
             { word: "直率", pinyin: "zhí shuài", cn: "坦率；直爽。", en: "candid" },
@@ -169,7 +131,7 @@
             { word: "得罪", pinyin: "dé zuì", cn: "触犯；使不愉快。", en: "offend" },
             { word: "别扭", pinyin: "biè niu", cn: "不顺心；拘束。", en: "awkward" },
             { word: "争辩", pinyin: "zhēng biàn", cn: "争论辩驳。", en: "dispute" },
-            { word: "瞬间", pinyin: "shùn jān", cn: "极短的时间。", en: "instant" },
+            { word: "瞬间", pinyin: "shùn jiān", cn: "极短的时间。", en: "instant" },
             { word: "兴致勃勃", pinyin: "xìng zhì bó bó", cn: "兴趣非常浓厚。", en: "high spirits" },
             { word: "狼狈", pinyin: "láng bèi", cn: "受窘的样子。", en: "difficult situation" },
             { word: "讥讽", pinyin: "jī fěng", cn: "嘲笑讽刺。", en: "ridicule" },
@@ -193,6 +155,7 @@
         let isProcessing = false; 
         let isBonusWord = false; 
 
+        // 外部词典加载逻辑
         fetch('dictionary.json')
             .then(r => r.json())
             .then(data => { mainDictionary = data; })
@@ -203,21 +166,14 @@
             for (let i = 0; i < 15; i++) {
                 const el = document.createElement('div');
                 el.className = 'falling-emoji';
-                el.innerText = ['📚', '✍️', '✨', '🏮'][Math.floor(Math.random()*4)];
+                el.innerText = ['📚', '✍️', '✨'][Math.floor(Math.random()*3)];
                 el.style.left = Math.random() * 100 + 'vw';
                 el.style.animationDuration = (8 + Math.random()*7) + 's';
                 el.style.animationDelay = (Math.random()*-10) + 's';
-                el.style.fontSize = (20 + Math.random()*20) + 'px';
                 container.appendChild(el);
             }
-            document.getElementById('today-date').innerText = "📅 " + new Date().toLocaleDateString();
+            document.getElementById('today-date').innerText = "今天是: " + new Date().toLocaleDateString();
         })();
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
-            if (isMuted) window.speechSynthesis.cancel();
-        }
 
         function startGame() {
             const name = document.getElementById('player-name').value.trim();
@@ -271,12 +227,15 @@
         function checkWord() {
             const str = selectedPath.map(i => board[i].char).join('');
             const unitMatch = wordBank.find(v => v.word === str);
+            
+            // 逻辑 A: 匹配到单元词库
             if (unitMatch) {
                 isProcessing = true;
                 isBonusWord = false;
                 showModal(unitMatch);
                 return;
             }
+            // 逻辑 B: 匹配到词典词库
             if (str.length >= 2 && mainDictionary[str]) {
                 const isPrefixOfUnit = wordBank.some(v => v.word.startsWith(str) && v.word !== str);
                 if (!isPrefixOfUnit) {
@@ -292,6 +251,7 @@
                     return;
                 }
             }
+            // 逻辑 C: 错误判定
             if (str.length >= 2) {
                 const canBeUnit = wordBank.some(v => v.word.startsWith(str));
                 const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(str));
@@ -383,24 +343,11 @@
             const maxScore = gameMode === 'easy' ? 60 : (gameMode === 'hard' ? 80 : 100);
             const ratio = score / maxScore;
             
-            let emoji = "💪";
-            let comment = "";
-            let fireworks = false;
-
-            if (ratio < 0.5) {
-                emoji = "🌱";
-                comment = "加油加油！再多练习一下，你一定可以更棒的！";
-            } else if (ratio < 0.75) {
-                emoji = "🌟";
-                comment = "很不错的表现！词汇量正在稳步提升哦，继续保持！";
-            } else if (ratio < 1) {
-                emoji = "🏆";
-                comment = "太厉害了！你几乎掌握了所有的词语，真是华文小达人！";
-            } else {
-                emoji = "👑";
-                comment = "独孤求败！你已经达到了最高境界，大满贯诞生！";
-                fireworks = true;
-            }
+            let emoji = "💪", comment = "", fireworks = false;
+            if (ratio < 0.5) { emoji = "🌱"; comment = "加油加油！再多练习一下！"; }
+            else if (ratio < 0.75) { emoji = "🌟"; comment = "很不错的表现！继续保持！"; }
+            else if (ratio < 1) { emoji = "🏆"; comment = "厉害！你是华文小达人！"; }
+            else { emoji = "👑"; comment = "大满贯诞生！"; fireworks = true; }
 
             document.getElementById('res-emoji').innerText = emoji;
             document.getElementById('res-date').innerText = "日期：" + new Date().toLocaleDateString();
@@ -411,16 +358,13 @@
 
             if (fireworks) {
                 const container = document.getElementById('emoji-container');
-                const fx = ['🎆', '✨', '🎉', '🔥'];
                 for (let i = 0; i < 60; i++) {
                     setTimeout(() => {
                         const el = document.createElement('div');
                         el.className = 'falling-emoji';
-                        el.style.opacity = "0.8";
                         el.style.zIndex = "3000";
-                        el.innerText = fx[Math.floor(Math.random()*fx.length)];
+                        el.innerText = ['🎆', '✨', '🎉', '🔥'][Math.floor(Math.random()*4)];
                         el.style.left = Math.random() * 100 + 'vw';
-                        el.style.fontSize = (20 + Math.random()*30) + 'px';
                         el.style.animationDuration = (2 + Math.random()*2) + 's';
                         container.appendChild(el);
                     }, i * 100);
@@ -428,6 +372,11 @@
             }
         }
 
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
+            if (isMuted) window.speechSynthesis.cancel();
+        }
         function speak(text) {
             if (isMuted) return;
             window.speechSynthesis.cancel();
