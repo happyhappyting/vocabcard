@@ -55,6 +55,15 @@
         .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 280px; border: 5px solid var(--primary); }
         button { padding: 12px 30px; border-radius: 15px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; width: 100%; }
         .tts-btn { background: #2196F3; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; margin-bottom: 10px; color: white; border: none; cursor: pointer; }
+
+        /* ✨ 新增：漂亮结算界面样式 ✨ */
+        #result-screen { display: none; }
+        .result-box { background: white; padding: 35px; border-radius: 30px; text-align: center; width: 300px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .result-title { font-size: 24px; margin-bottom: 20px; color: var(--text); }
+        .result-score { font-size: 60px; font-weight: 900; color: var(--primary); margin: 10px 0; }
+        .result-comment { font-size: 18px; font-weight: bold; margin-bottom: 25px; min-height: 50px; line-height: 1.4; }
+        .result-info { font-size: 14px; color: #666; margin-bottom: 5px; }
+        .celebrate-emoji { font-size: 50px; display: block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -71,6 +80,18 @@
                 <option value="easy">简单版 (加粗/3分/60满)</option>
             </select>
             <button onclick="startGame()">进入挑战</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="modal">
+        <div class="result-box">
+            <span class="celebrate-emoji" id="res-emoji">🎉</span>
+            <div class="result-title">挑战报告</div>
+            <div class="result-info" id="res-date"></div>
+            <div class="result-info" id="res-name"></div>
+            <div class="result-score" id="res-score">0</div>
+            <div class="result-comment" id="res-comment">继续努力，加油！</div>
+            <button onclick="location.reload()">再挑战一次</button>
         </div>
     </div>
 
@@ -129,12 +150,11 @@
         const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
         let board = [], selectedPath = [], score = 0, timeLeft = 300, timerPtr = null;
         let gameMode = 'hard', perScore = 5, foundWords = [];
-        let mainDictionary = {}; // 对应参考代码的外部大辞典存储
+        let mainDictionary = {}; 
         let isMuted = false;
         let isProcessing = false; 
-        let isBonusWord = false; // 标记当前弹窗是否为课外词
+        let isBonusWord = false; 
 
-        // --- 参考代码中的核心 Fetch 逻辑 ---
         fetch('dictionary.json')
             .then(r => r.json())
             .then(data => { 
@@ -207,11 +227,8 @@
             checkWord();
         }
 
-        // --- 核心判定逻辑（微调自参考代码） ---
         function checkWord() {
             const str = selectedPath.map(i => board[i].char).join('');
-            
-            // 1. 优先判定单元词库 (必须完全匹配)
             const unitMatch = wordBank.find(v => v.word === str);
             if (unitMatch) {
                 isProcessing = true;
@@ -219,12 +236,8 @@
                 showModal(unitMatch);
                 return;
             }
-
-            // 2. 判定外部大辞典 (单字不跳)
             if (str.length >= 2 && mainDictionary[str]) {
-                // 检查这个词是不是单元词库里某个长词的前半部分
                 const isPrefixOfUnit = wordBank.some(v => v.word.startsWith(str) && v.word !== str);
-                
                 if (!isPrefixOfUnit) {
                     isProcessing = true;
                     isBonusWord = true;
@@ -238,8 +251,6 @@
                     return;
                 }
             }
-
-            // 3. 熔断与错误逻辑
             if (str.length >= 2) {
                 const canBeUnit = wordBank.some(v => v.word.startsWith(str));
                 const canBeDict = Object.keys(mainDictionary).some(k => k.startsWith(str));
@@ -247,7 +258,6 @@
                     triggerWrongEffect();
                 }
             }
-            
             if (str.length >= 4) { 
                 triggerWrongEffect();
             }
@@ -270,7 +280,6 @@
             document.getElementById('m-cn').innerText = v.cn;
             document.getElementById('m-en').innerText = v.en;
             
-            // 样式区分
             const frame = document.getElementById('m-frame');
             const bonusTag = document.getElementById('bonus-tag');
             frame.style.borderColor = isBonusWord ? "var(--info)" : "var(--primary)";
@@ -287,7 +296,6 @@
 
             btn.onclick = () => {
                 if(!isBonusWord) {
-                    // 正式词消除：变回背景字填充
                     selectedPath.forEach(idx => {
                         board[idx] = { char: fillers[Math.floor(Math.random()*fillers.length)], wordObj: null };
                     });
@@ -321,17 +329,62 @@
         }
 
         function updateTimer() {
-            if (document.getElementById('study-modal').style.display === 'flex') return;
+            if (document.getElementById('study-modal').style.display === 'flex' || document.getElementById('result-screen').style.display === 'flex') return;
             timeLeft--;
             let m = Math.floor(timeLeft/60), s = timeLeft%60;
             document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
             if (timeLeft <= 0) endGame();
         }
 
+        // --- ✨ 改良版漂亮结算逻辑 ✨ ---
         function endGame() {
             clearInterval(timerPtr);
-            alert(`挑战结束！得分：${score}`);
-            location.reload();
+            const maxScore = gameMode === 'easy' ? 60 : 100;
+            const ratio = score / maxScore;
+            
+            let emoji = "💪";
+            let comment = "";
+            let fireworks = false;
+
+            if (ratio < 0.5) {
+                emoji = "🌱";
+                comment = "加油加油！再多练习一下，你一定可以更棒的！";
+            } else if (ratio < 0.75) {
+                emoji = "🌟";
+                comment = "很不错的表现！词汇量正在稳步提升哦，继续保持！";
+            } else if (ratio < 1) {
+                emoji = "🏆";
+                comment = "太厉害了！你几乎掌握了所有的词语，真是华文小达人！";
+            } else {
+                emoji = "👑";
+                comment = "独孤求败！你已经达到了最高境界，大满贯诞生！";
+                fireworks = true;
+            }
+
+            document.getElementById('res-emoji').innerText = emoji;
+            document.getElementById('res-date').innerText = "日期：" + new Date().toLocaleDateString();
+            document.getElementById('res-name').innerText = "挑战者：" + document.getElementById('player-name').value;
+            document.getElementById('res-score').innerText = score + "分";
+            document.getElementById('res-comment').innerText = comment;
+            document.getElementById('result-screen').style.display = 'flex';
+
+            if (fireworks) {
+                const container = document.getElementById('emoji-container');
+                const fx = ['🎆', '✨', '🎉', '🔥', '✨'];
+                for (let i = 0; i < 60; i++) {
+                    setTimeout(() => {
+                        const el = document.createElement('div');
+                        el.className = 'falling-emoji';
+                        el.style.opacity = "1";
+                        el.style.zIndex = "3000";
+                        el.innerText = fx[Math.floor(Math.random()*fx.length)];
+                        el.style.left = Math.random() * 100 + 'vw';
+                        el.style.fontSize = (20 + Math.random()*30) + 'px';
+                        el.style.animationDuration = (2 + Math.random()*2) + 's';
+                        container.appendChild(el);
+                    }, i * 100);
+                }
+            }
         }
 
         function speak(text) {
