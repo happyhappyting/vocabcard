@@ -494,7 +494,7 @@
                 characterImage.alt = v.word + '的人物图片';
                 characterImage.onload = () => { characterImage.style.display = 'block'; };
                 characterImage.onerror = () => { characterImage.style.display = 'none'; };
-                characterImage.src = encodeURIComponent(v.word) + '.png';
+characterImage.src = encodeURIComponent(v.word) + '.jpg';
             }
             document.getElementById('m-pinyin').innerText = v.pinyin || '';
             document.getElementById('m-pinyin').style.display = v.pinyin ? '' : 'none';
