@@ -402,27 +402,80 @@
             return check(0, 0);
         }
 
-        function initBoard() {
-            const positions = [];
-            for (let r = 0; r < 5; r++) {
-                positions.push([r * 5, r * 5 + 1], [r * 5 + 3, r * 5 + 4]);
-            }
-            for (let attempt = 0; attempt < 3000; attempt++) {
-                board = Array.from({length:25}, () => ({
-                    char: fillers[Math.floor(Math.random() * fillers.length)], empty:false
-                }));
-                const shuffled = shuffle([...positions]);
-                const words = shuffle([...targets]);
-                words.forEach((v,n) => {
-                    const [a,b] = shuffled[n];
-                    const reverse = Math.random() < 0.5;
-                    board[a].char = v.word[reverse ? 1 : 0];
-                    board[b].char = v.word[reverse ? 0 : 1];
-                });
-                if (boardIsSafe()) { render(); return; }
-            }
-            throw Error('无法生成棋盘，请重新开始游戏');
+
+function initBoard() {
+    const directions = [
+        [0, 1, 40], [0, -1, 10],
+        [1, 0, 15], [-1, 0, 15],
+        [1, 1, 5], [1, -1, 5],
+        [-1, 1, 5], [-1, -1, 5]
+    ];
+
+    function weightedPick(options) {
+        let total = options.reduce((sum, option) => sum + option.weight, 0);
+        let roll = Math.random() * total;
+        for (const option of options) {
+            roll -= option.weight;
+            if (roll < 0) return option;
         }
+        return options[options.length - 1];
+    }
+
+    for (let attempt = 0; attempt < 3000; attempt++) {
+        board = Array.from({length:25}, () => ({
+            char: fillers[Math.floor(Math.random() * fillers.length)],
+            empty: false
+        }));
+
+        const used = new Set();
+        let success = true;
+
+        for (const target of shuffle([...targets])) {
+            const options = [];
+
+            for (let a = 0; a < 25; a++) {
+                if (used.has(a)) continue;
+
+                const row = Math.floor(a / 5);
+                const col = a % 5;
+
+                for (const [dr, dc, weight] of directions) {
+                    const r = row + dr;
+                    const c = col + dc;
+
+                    if (r < 0 || r >= 5 || c < 0 || c >= 5) continue;
+
+                    const b = r * 5 + c;
+
+                    if (!used.has(b)) {
+                        options.push({a, b, weight});
+                    }
+                }
+            }
+
+            if (!options.length) {
+                success = false;
+                break;
+            }
+
+            const {a, b} = weightedPick(options);
+
+            board[a].char = target.word[0];
+            board[b].char = target.word[1];
+
+            used.add(a);
+            used.add(b);
+        }
+
+        if (success && boardIsSafe()) {
+            render();
+            return;
+        }
+    }
+
+    throw Error('无法生成棋盘，请重新开始游戏');
+}
+
 
         function render() {
             const container = document.getElementById('game-board');
