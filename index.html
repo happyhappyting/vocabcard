@@ -218,7 +218,8 @@
             <input type="text" id="player-name" placeholder="输入挑战者大名">
             <select id="bank-select" aria-label="选择题库">
                 <option value="people">人物</option>
-                <option value="words">相关词语</option>
+                <option value="emotion">情感词语</option>
+<option value="basketball">篮球相关词语</option>
             </select>
             <button onclick="startGame()">开始挑战</button>
         </div>
@@ -283,18 +284,31 @@
                 {word:"家乐", cn:"蓝家乐\n10岁、Uncle 蓝的孙子"},
                 {word:"爷爷", cn:"Uncle 顾\n70岁、小胖的爷爷、鸡饭老板"}
             ],
-            words: [
-                {word:"篮球", pinyin:"lán qiú", cn:"一种球类运动。", en:"Basketball; a ball game."},
-                {word:"担忧", pinyin:"dān yōu", cn:"心里担心。", en:"To feel worried."},
-                {word:"八卦", pinyin:"bā guà", cn:"谈论别人的事情。", en:"Gossip; talking about others."},
-                {word:"丢脸", pinyin:"diū liǎn", cn:"做了不好的事，觉得难为情。", en:"To feel embarrassed."},
-                {word:"投篮", pinyin:"tóu lán", cn:"把篮球投进篮筐。", en:"To shoot a basketball into the hoop."},
-                {word:"练球", pinyin:"liàn qiú", cn:"练习打球。", en:"To practise playing ball."},
-                {word:"教练", pinyin:"jiào liàn", cn:"教别人运动技巧的人。", en:"A person who trains players."},
-                {word:"组队", pinyin:"zǔ duì", cn:"找人组成一个队伍。", en:"To form a team."},
-                {word:"参赛", pinyin:"cān sài", cn:"参加比赛。", en:"To take part in a competition."},
-                {word:"中锋", pinyin:"zhōng fēng", cn:"篮球队中通常在篮下打球的队员。", en:"A player who usually plays near the basket."}
-            ]
+
+emotion: [
+    {word:"担忧", pinyin:"dān yōu", cn:"心里担心。", en:"Worried."},
+    {word:"丢脸", pinyin:"diū liǎn", cn:"觉得难为情、没面子。", en:"Lose face; feel embarrassed."},
+    {word:"犹豫", pinyin:"yóu yù", cn:"拿不定主意。", en:"Hesitate; be unsure."},
+    {word:"得意", pinyin:"dé yì", cn:"因为做得好而很高兴，有点骄傲。", en:"Pleased with oneself; proud."},
+    {word:"疑惑", pinyin:"yí huò", cn:"不明白，心里有问题。", en:"Confused; puzzled."},
+    {word:"挑衅", pinyin:"tiǎo xìn", cn:"故意惹别人，让对方生气。", en:"Provoke; try to make someone angry."},
+    {word:"纳闷", pinyin:"nà mèn", cn:"觉得奇怪，想不明白。", en:"Feel puzzled; wonder why."},
+    {word:"矛盾", pinyin:"máo dùn", cn:"想法或做法不一致；心里难选择。", en:"Conflict; mixed feelings."},
+    {word:"嘀咕", pinyin:"dí gu", cn:"小声说话，或心里不放心。", en:"Mutter; worry to oneself."}
+],
+basketball: [
+    {word:"练球", pinyin:"liàn qiú", cn:"练习打篮球。", en:"Practise basketball."},
+    {word:"教练", pinyin:"jiào liàn", cn:"教别人打球的人。", en:"Coach; a person who trains players."},
+    {word:"组队", pinyin:"zǔ duì", cn:"找人组成一个队伍。", en:"Form a team."},
+    {word:"投篮", pinyin:"tóu lán", cn:"把球投向篮筐。", en:"Shoot the basketball."},
+    {word:"篮球", pinyin:"lán qiú", cn:"一种球类运动；也指这种球。", en:"Basketball (sport or ball)."},
+    {word:"中锋", pinyin:"zhōng fēng", cn:"篮球队中主要在篮下活动的球员。", en:"Centre; a player near the basket."},
+    {word:"训练", pinyin:"xùn liàn", cn:"有计划地反复练习。", en:"Training; practise to improve."},
+    {word:"后卫", pinyin:"hòu wèi", cn:"主要负责运球、传球或防守的球员。", en:"Guard; a player who handles the ball or defends."},
+    {word:"前锋", pinyin:"qián fēng", cn:"主要负责进攻和得分的球员。", en:"Forward; an attacking player."},
+    {word:"篮筐", pinyin:"lán kuāng", cn:"篮球要投进去的圆圈。", en:"Basketball hoop."}
+]
+
         };
         const fillers = "的一是在了我不有个他这到们中上大为国地来以成行时用后".split('');
         let board = [], selectedPath = [], timeLeft = 300, timerPtr = null;
